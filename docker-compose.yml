@@ -1,3 +1,15 @@
+networks:
+  simbav2-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.95.0.0/24
+  nginx-network:
+    external: true
+    name: nginx-manager_default
+
+
+
 services:
   simba:
     build: .
@@ -6,7 +18,7 @@ services:
     restart: unless-stopped
     ports:
       # Cambia el primer número para usar otro puerto en tu servidor (ej. "80:80")
-      - "${SIMBA_PORT:-8080}:80"
+      - "${SIMBA_PORT:-8190}:80"
     read_only: true
     tmpfs:
       - /var/cache/nginx
@@ -14,3 +26,6 @@ services:
       - /tmp
     security_opt:
       - no-new-privileges:true
+    networks:
+        - simbav2-network
+        - nginx-network
