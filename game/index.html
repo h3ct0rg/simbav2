@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d0d1a">
+<title>Simba: El camino a casa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; height: 100%; background: #0d0d1a; overflow: hidden; touch-action: none;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+  body { display: flex; align-items: center; justify-content: center; }
+  canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+
+  /* ---------- Controles táctiles (solo pantallas táctiles en horizontal) ---------- */
+  .ctl { position: fixed; z-index: 2; display: none; }
+  #t-jump {
+    right: calc(28px + env(safe-area-inset-right)); bottom: 28px;
+    width: 92px; height: 92px; border-radius: 50%;
+    border: 3px solid rgba(255,255,255,.55); background: rgba(255,255,255,.16); color: #fff;
+    font: 11px "Press Start 2P", monospace; text-shadow: 2px 2px #1b1b2f;
+    display: none; align-items: center; justify-content: center; flex-direction: column; gap: 6px;
+  }
+  #t-jump .arrow { font-size: 26px; line-height: 1; }
+  #t-jump.on { background: rgba(255,255,255,.4); transform: scale(.94); }
+  #joy {
+    left: calc(28px + env(safe-area-inset-left)); bottom: 24px;
+    width: 128px; height: 128px; border-radius: 50%;
+    border: 3px solid rgba(255,255,255,.45); background: rgba(255,255,255,.10);
+  }
+  #joy::before, #joy::after { /* flechitas guía */
+    content: '◀'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    color: rgba(255,255,255,.5); font-size: 14px;
+  }
+  #joy::after { content: '▶'; left: auto; right: 10px; }
+  #knob {
+    position: absolute; left: 50%; top: 50%; width: 58px; height: 58px; border-radius: 50%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle at 35% 30%, #ffffff, #bfe3ff 55%, #7aa7d6);
+    border: 3px solid rgba(27,27,47,.6); box-shadow: 0 3px 8px rgba(0,0,0,.35);
+  }
+  #joy.on #knob { background: radial-gradient(circle at 35% 30%, #ffffff, #d6efff 55%, #9cc4ec); }
+  #t-pause {
+    top: 52px; right: calc(12px + env(safe-area-inset-right)); width: 40px; height: 40px; border-radius: 10px;
+    border: 2px solid rgba(255,255,255,.45); background: rgba(0,0,0,.25); color: #fff; font: bold 16px monospace;
+  }
+  @media (orientation: landscape) {
+    .touch-mode.playing #joy, .touch-mode.playing #t-pause { display: block; }
+    .touch-mode.playing #t-jump { display: flex; }
+  }
+
+  /* ---------- Aviso: girar el móvil ---------- */
+  #rotate {
+    position: fixed; inset: 0; z-index: 5; display: none;
+    flex-direction: column; align-items: center; justify-content: center; gap: 28px;
+    padding: 24px; box-sizing: border-box; text-align: center;
+    background: radial-gradient(circle at 50% 40%, #23234a, #0d0d1a 70%);
+    color: #fff; font: 13px/1.9 "Press Start 2P", monospace;
+  }
+  #rotate p { margin: 0; max-width: 320px; }
+  #rotate .sub { color: #bfe3ff; font-size: 10px; }
+  #rotate svg { width: 140px; height: 140px; }
+  #rotate .phone { transform-origin: 70px 70px; animation: turn 2.4s ease-in-out infinite; }
+  #rotate .arc { opacity: .9; animation: blink 2.4s ease-in-out infinite; }
+  @keyframes turn { 0%, 20% { transform: rotate(0deg); } 50%, 80% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
+  @keyframes blink { 0%, 15% { opacity: .9; } 50%, 80% { opacity: 0; } 100% { opacity: .9; } }
+  @media (orientation: portrait) {
+    .touch-mode #rotate { display: flex; }
+    .touch-mode canvas { visibility: hidden; }
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<button id="t-jump" class="ctl" aria-label="Saltar"><span class="arrow">⤒</span><span class="label">SALTAR</span></button>
+<div id="joy" class="ctl" aria-label="Joystick"><div id="knob"></div></div>
+<button id="t-pause" class="ctl" aria-label="Pausa">II</button>
+
+<div id="rotate" role="alert">
+  <svg viewBox="0 0 140 140" aria-hidden="true">
+    <!-- flecha curva de giro -->
+    <g class="arc" fill="none" stroke="#ffb3d1" stroke-width="5" stroke-linecap="round">
+      <path d="M 112 46 A 50 50 0 0 0 46 24" />
+      <path d="M 46 24 l 12 -8 M 46 24 l 10 10" />
+    </g>
+    <!-- móvil -->
+    <g class="phone">
+      <rect x="48" y="28" width="44" height="84" rx="8" fill="#1b1b2f" stroke="#ffffff" stroke-width="4"/>
+      <rect x="54" y="38" width="32" height="60" rx="2" fill="#6ec6ff"/>
+      <rect x="54" y="80" width="32" height="18" fill="#4caf50"/>
+      <circle cx="70" cy="105" r="3" fill="#ffffff"/>
+      <!-- gatito en la pantalla -->
+      <rect x="62" y="70" width="14" height="10" rx="3" fill="#ffffff"/>
+      <circle cx="74" cy="68" r="5" fill="#ffffff"/>
+      <circle cx="75.5" cy="67.5" r="1.3" fill="#2b6cff"/>
+    </g>
+  </svg>
+  <p class="msg">Para este juego necesitas poner tu móvil en horizontal</p>
+  <p class="sub">Gíralo así para jugar con Simba</p>
+</div>
+
+<!-- ?v=N: súbelo al publicar cambios para que el navegador no use versiones en caché -->
+<script src="../sprites/manifest.js?v=6"></script>
+<script src="settings.js?v=6"></script>
+<script src="menu.js?v=6"></script>
+<script src="game.js?v=6"></script>
+</body>
+</html>

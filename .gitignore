@@ -1,0 +1,16 @@
+# Configuración local de Claude Code
+.claude/
+
+# Primer sprite de prueba (no lo usa el juego)
+assets/
+
+# Python
+__pycache__/
+*.pyc
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Guion del juego (privado, no se publica)
+historia.md

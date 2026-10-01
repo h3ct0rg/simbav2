@@ -1,0 +1,11 @@
+# Solo se copian game/ y sprites/ (ver Dockerfile); esto evita enviar al build lo que no hace falta
+.claude/
+assets/
+.git/
+**/__pycache__/
+
+# Material de trabajo de los sprites (originales, scripts de procesado)
+sprites/raw/
+sprites/*.py
+sprites/sources.json
+sprites/README.md

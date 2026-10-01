@@ -1,0 +1,33 @@
+{
+  "owner_base": "https://backblaze.pixellab.ai/file/pixellab-characters/a3105ed2-7608-4e57-832f-3042d4343a87",
+  "characters": {
+    "hero": {
+      "id": "9cf92fa4-8c5e-47a5-95e2-ff432540f02d",
+      "outline": "#2b2440",
+      "anims": {
+        "idle": { "anim_id": "f324fb3d-3f3e-4d80-b53a-40a0d316cc85", "count": 8, "fps": 8, "align_feet": true },
+        "run":  { "anim_id": "37dd1aa0-0c74-4d27-856d-48f1e20345ab", "count": 6, "fps": 12 },
+        "jump": { "anim_id": "7120db71-78cb-4c37-89d3-8637562ee340", "count": 8, "fps": 10 }
+      }
+    },
+    "mother": {
+      "id": "71c92b45-c37a-4963-bb07-3260db4f075e",
+      "anims": {
+        "idle": { "anim_id": "c3e58855-8342-44b1-9b4f-316c78382cf6", "count": 8, "fps": 6, "align_feet": true }
+      }
+    },
+    "dog": {
+      "id": "ec152885-a328-4486-a0f4-fd3758893b74",
+      "anims": {
+        "walk": { "anim_id": "9e87f3b5-70d6-468d-9821-eef70a13ae2e", "count": 6, "fps": 8 }
+      }
+    }
+  },
+  "images": {
+    "bat": { "url": "https://api.pixellab.ai/mcp/images/495be581-3471-47ed-baa1-049465a98642/download" },
+    "rat": { "url": "https://api.pixellab.ai/mcp/images/9166e9b0-1448-45be-9085-5c6db7cb4541/download" },
+    "mother_thin": { "url": "https://api.pixellab.ai/mcp/images/27e44334-faff-4884-a31a-606b44dd0941/download", "palette_from": "raw/mother/rotations/east.png", "slim_variants": [0.55, 0.68, 0.82] },
+    "bg":  { "url": "https://api.pixellab.ai/mcp/images/a1628ced-964d-42be-b2c3-a401566fb32d/download", "crop": false }
+  },
+  "tiles": { "source": "raw/tileset.png + raw/tileset_meta.json (tileset f569141d-9d98-4f70-a251-c9bbb740470c)" }
+}

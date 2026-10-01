@@ -1,0 +1,16 @@
+services:
+  simba:
+    build: .
+    image: simba-game:latest
+    container_name: simba-game
+    restart: unless-stopped
+    ports:
+      # Cambia el primer número para usar otro puerto en tu servidor (ej. "80:80")
+      - "${SIMBA_PORT:-8080}:80"
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
