@@ -59,18 +59,38 @@ manifest = {}
 
 # ---- Personajes con animaciones ----
 for name, ch in SRC.get("characters", {}).items():
+    # cada personaje puede venir de otra cuenta de PixelLab (otra carpeta en el servidor)
+    OWNER = ch.get("owner_base", SRC["owner_base"])
     frames = {}  # anim -> [Image]
     raw_paths = {}
     for anim, a in ch["anims"].items():
+        if "rotation" in a:
+            # pose fija: una rotación del personaje usada como animación de 1 frame
+            url = f"{OWNER}/{ch['id']}/rotations/{a['rotation']}.png"
+            frames[anim] = [fetch(url, os.path.join(HERE, "raw", name, "rotations", f"{a['rotation']}.png"))]
+            continue
         imgs = []
         for i in range(a["count"]):
             url = f"{OWNER}/{ch['id']}/animations/{a['anim_id']}/{a.get('dir', 'east')}/{i}.png"
-            dest = os.path.join(HERE, "raw", name, anim, f"{i}.png")
+            # la copia local incluye el id de la animación: si se cambia una animación por otra
+            # con el mismo nombre, NO se reutilizan los frames viejos
+            dest = os.path.join(HERE, "raw", name, anim, a["anim_id"][:8], f"{i}.png")
             imgs.append(fetch(url, dest))
         frames[anim] = imgs
     for rot in ch.get("rotations", ["east", "west", "south"]):
         url = f"{OWNER}/{ch['id']}/rotations/{rot}.png"
         fetch(url, os.path.join(HERE, "raw", name, "rotations", f"{rot}.png"))
+
+    # Las animaciones pueden venir en lienzos de distinto tamaño (p. ej. v3 = 96 px, plantillas = 92 px):
+    # se centran todas en un lienzo común para que el personaje no "salte" al cambiar de animación
+    CW = max(im.width for imgs in frames.values() for im in imgs)
+    CH = max(im.height for imgs in frames.values() for im in imgs)
+    for anim, imgs in frames.items():
+        for i, im in enumerate(imgs):
+            if im.size != (CW, CH):
+                canvas = Image.new("RGBA", (CW, CH), (0, 0, 0, 0))
+                canvas.paste(im, ((CW - im.width) // 2, (CH - im.height) // 2))
+                imgs[i] = canvas
 
     # bbox común a todos los frames del personaje -> todos del mismo tamaño y alineados
     boxes = [im.getbbox() for imgs in frames.values() for im in imgs if im.getbbox()]

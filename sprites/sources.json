@@ -5,29 +5,114 @@
       "id": "9cf92fa4-8c5e-47a5-95e2-ff432540f02d",
       "outline": "#2b2440",
       "anims": {
-        "idle": { "anim_id": "f324fb3d-3f3e-4d80-b53a-40a0d316cc85", "count": 8, "fps": 8, "align_feet": true },
-        "run":  { "anim_id": "37dd1aa0-0c74-4d27-856d-48f1e20345ab", "count": 6, "fps": 12 },
-        "jump": { "anim_id": "7120db71-78cb-4c37-89d3-8637562ee340", "count": 8, "fps": 10 }
+        "idle": {
+          "anim_id": "f324fb3d-3f3e-4d80-b53a-40a0d316cc85",
+          "count": 8,
+          "fps": 8,
+          "align_feet": true
+        },
+        "run": {
+          "anim_id": "4e47474b-3977-41c3-8b24-abc0ceb40dc0",
+          "count": 8,
+          "fps": 12
+        },
+        "jump": {
+          "anim_id": "7120db71-78cb-4c37-89d3-8637562ee340",
+          "count": 8,
+          "fps": 10
+        }
       }
     },
     "mother": {
       "id": "71c92b45-c37a-4963-bb07-3260db4f075e",
       "anims": {
-        "idle": { "anim_id": "c3e58855-8342-44b1-9b4f-316c78382cf6", "count": 8, "fps": 6, "align_feet": true }
+        "idle": {
+          "anim_id": "c3e58855-8342-44b1-9b4f-316c78382cf6",
+          "count": 8,
+          "fps": 6,
+          "align_feet": true
+        }
       }
     },
     "dog": {
       "id": "ec152885-a328-4486-a0f4-fd3758893b74",
       "anims": {
-        "walk": { "anim_id": "9e87f3b5-70d6-468d-9821-eef70a13ae2e", "count": 6, "fps": 8 }
+        "walk": {
+          "anim_id": "9e87f3b5-70d6-468d-9821-eef70a13ae2e",
+          "count": 6,
+          "fps": 8
+        }
+      }
+    },
+    "bruto": {
+      "owner_base": "https://backblaze.pixellab.ai/file/pixellab-characters/c25254bb-ef57-49e6-b342-82e9e2f3527c",
+      "id": "b040deee-3a25-4524-9e26-462f8c4b1a87",
+      "anims": {
+        "charge": {
+          "anim_id": "cd0389aa-f192-438b-9618-a9b078a10886",
+          "count": 6,
+          "fps": 14
+        },
+        "bark": {
+          "anim_id": "01f59d62-7606-4381-8588-12798f8196d1",
+          "count": 6,
+          "fps": 10,
+          "align_feet": true
+        },
+        "idle": {
+          "rotation": "east"
+        }
+      }
+    },
+    "kitten": {
+      "owner_base": "https://backblaze.pixellab.ai/file/pixellab-characters/c25254bb-ef57-49e6-b342-82e9e2f3527c",
+      "id": "f6c38503-8851-40c6-b1ba-95f3640d9a4d",
+      "outline": "#2b2440",
+      "anims": {
+        "sit": {
+          "anim_id": "12a40649-2a9e-4596-9762-be2a3cad51aa",
+          "count": 8,
+          "fps": 5,
+          "align_feet": true
+        }
       }
     }
   },
   "images": {
-    "bat": { "url": "https://api.pixellab.ai/mcp/images/495be581-3471-47ed-baa1-049465a98642/download" },
-    "rat": { "url": "https://api.pixellab.ai/mcp/images/9166e9b0-1448-45be-9085-5c6db7cb4541/download" },
-    "mother_thin": { "url": "https://api.pixellab.ai/mcp/images/27e44334-faff-4884-a31a-606b44dd0941/download", "palette_from": "raw/mother/rotations/east.png", "slim_variants": [0.55, 0.68, 0.82] },
-    "bg":  { "url": "https://api.pixellab.ai/mcp/images/a1628ced-964d-42be-b2c3-a401566fb32d/download", "crop": false }
+    "bat": {
+      "url": "https://api.pixellab.ai/mcp/images/495be581-3471-47ed-baa1-049465a98642/download"
+    },
+    "rat": {
+      "url": "https://api.pixellab.ai/mcp/images/9166e9b0-1448-45be-9085-5c6db7cb4541/download"
+    },
+    "mother_thin": {
+      "url": "https://api.pixellab.ai/mcp/images/27e44334-faff-4884-a31a-606b44dd0941/download",
+      "palette_from": "raw/mother/rotations/east.png",
+      "slim_variants": [
+        0.55,
+        0.68,
+        0.82
+      ]
+    },
+    "bg": {
+      "url": "https://api.pixellab.ai/mcp/images/a1628ced-964d-42be-b2c3-a401566fb32d/download",
+      "crop": false
+    },
+    "cave_bg": {
+      "url": "https://api.pixellab.ai/mcp/images/eeb7c921-1f92-467d-a132-1590b40608c7/download",
+      "crop": false
+    },
+    "cave_door": {
+      "url": "https://api.pixellab.ai/mcp/images/332c91ed-3c90-42ea-8943-00a549e842b1/download"
+    },
+    "tree_door": {
+      "url": "https://api.pixellab.ai/mcp/images/592c2ac3-d697-4b4a-a471-9634938f2b07/download"
+    },
+    "life_icon": {
+      "url": "https://api.pixellab.ai/mcp/images/7f5bf126-8ccc-457a-b967-677c4c60ee1f/download"
+    }
   },
-  "tiles": { "source": "raw/tileset.png + raw/tileset_meta.json (tileset f569141d-9d98-4f70-a251-c9bbb740470c)" }
+  "tiles": {
+    "source": "raw/tileset.png + raw/tileset_meta.json (tileset f569141d-9d98-4f70-a251-c9bbb740470c)"
+  }
 }

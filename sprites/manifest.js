@@ -23,7 +23,9 @@ window.SPRITES = {
      "hero/run/2.png",
      "hero/run/3.png",
      "hero/run/4.png",
-     "hero/run/5.png"
+     "hero/run/5.png",
+     "hero/run/6.png",
+     "hero/run/7.png"
     ]
    },
    "jump": {
@@ -85,6 +87,63 @@ window.SPRITES = {
    44
   ]
  },
+ "bruto": {
+  "anims": {
+   "charge": {
+    "fps": 14,
+    "frames": [
+     "bruto/charge/0.png",
+     "bruto/charge/1.png",
+     "bruto/charge/2.png",
+     "bruto/charge/3.png",
+     "bruto/charge/4.png",
+     "bruto/charge/5.png"
+    ]
+   },
+   "bark": {
+    "fps": 10,
+    "frames": [
+     "bruto/bark/0.png",
+     "bruto/bark/1.png",
+     "bruto/bark/2.png",
+     "bruto/bark/3.png",
+     "bruto/bark/4.png",
+     "bruto/bark/5.png"
+    ]
+   },
+   "idle": {
+    "fps": 10,
+    "frames": [
+     "bruto/idle/0.png"
+    ]
+   }
+  },
+  "size": [
+   148,
+   98
+  ]
+ },
+ "kitten": {
+  "anims": {
+   "sit": {
+    "fps": 5,
+    "frames": [
+     "kitten/sit/0.png",
+     "kitten/sit/1.png",
+     "kitten/sit/2.png",
+     "kitten/sit/3.png",
+     "kitten/sit/4.png",
+     "kitten/sit/5.png",
+     "kitten/sit/6.png",
+     "kitten/sit/7.png"
+    ]
+   }
+  },
+  "size": [
+   54,
+   35
+  ]
+ },
  "bat": "bat/bat.png",
  "rat": "rat/rat.png",
  "mother_thin": [
@@ -94,6 +153,10 @@ window.SPRITES = {
   "mother_thin/mother_thin_3.png"
  ],
  "bg": "bg/bg.png",
+ "cave_bg": "cave_bg/cave_bg.png",
+ "cave_door": "cave_door/cave_door.png",
+ "tree_door": "tree_door/tree_door.png",
+ "life_icon": "life_icon/life_icon.png",
  "tiles": {
   "wang_13": "tiles/wang_13.png",
   "wang_10": "tiles/wang_10.png",

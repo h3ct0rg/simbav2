@@ -1,0 +1,46 @@
+>> bruto_create
+id: b040deee-3a25-4524-9e26-462f8c4b1a87 | name: Bruto Boss | mode: standard (1 generation) | directions: 4 | body: quadruped (dog) | size: 112x112px | style: basic shading, single color black outline, high detail | status: processing (~2-3 minutes) |  | hint: get_character(character_id="b040deee-3a25-4524-9e26-462f8
+>> bruto_wait
+1 job(s) finished after 167s, 0 still running: | 54de02e0-0246-40e2-b1d9-b7dcd6f5a1f5 completed (generation, took 168s) -> get_character(character_id="b040deee-3a25-4524-9e26-462f8c4b1a87") | hint: nothing else is running
+>> bruto_run
+character: b040deee-3a25-4524-9e26-462f8c4b1a87 | animation: running-6-frames | directions: east (1 jobs) | group: 952b00e2-90b9-4906-9b09-c41d4cbd3ecc | eta: ~2-4 min | add more directions to this group: animate_character(character_id="b040deee-3a25-4524-9e26-462f8c4b1a87", template_animation_id="running-6-f
+>> bruto_run_wait
+1 job(s) finished after 164s, 0 still running: | 17a3cc4f-cc92-44d1-9738-ebc41b47ea8b completed (generation, took 346s) -> get_character(character_id="b040deee-3a25-4524-9e26-462f8c4b1a87") | hint: nothing else is running
+>> bruto_bark
+character: b040deee-3a25-4524-9e26-462f8c4b1a87 | animation: bark | directions: east (1 jobs) | group: 070913ca-723a-4d45-84a1-ec8dd054aba4 | eta: ~2-4 min | add more directions to this group: animate_character(character_id="b040deee-3a25-4524-9e26-462f8c4b1a87", template_animation_id="bark", animation_group_
+>> bruto_bark_wait
+1 job(s) finished after 170s, 0 still running: | 612bc0c3-4734-4414-b575-84b407e6e8c5 completed (generation, took 353s) -> get_character(character_id="b040deee-3a25-4524-9e26-462f8c4b1a87") | hint: nothing else is running
+>> bruto_info
+status: completed | id: b040deee-3a25-4524-9e26-462f8c4b1a87 | name: Bruto Boss | state_name: Idle | directions: 4 (south, east, north, west) | size: 160x160px | view: side | style: basic shading, single color black outline, high detail | group: 571d6a35-680b-4666-a516-662286bcc75b (1 state) |  | rotations: |   south: ht
+>> kitten_create
+id: f6c38503-8851-40c6-b1ba-95f3640d9a4d | name: Messenger Kitten | mode: standard (1 generation) | directions: 4 | body: quadruped (cat) | size: 48x48px | style: basic shading, single color black outline, high detail | status: processing (~2-3 minutes) |  | hint: get_character(character_id="f6c38503-8851-40c6-b1ba-9
+>> kitten_wait
+1 job(s) finished after 38s, 0 still running: | 4a77eff9-650f-463a-901e-adf263a53be2 completed (generation, took 39s) -> get_character(character_id="f6c38503-8851-40c6-b1ba-95f3640d9a4d") | hint: nothing else is running
+>> kitten_idle
+character: f6c38503-8851-40c6-b1ba-95f3640d9a4d | animation: sitting | directions: east (1 jobs) | group: 6879c983-efd3-453d-8593-5bf3a12063f3 | eta: ~2-4 min | add more directions to this group: animate_character(character_id="f6c38503-8851-40c6-b1ba-95f3640d9a4d", template_animation_id="sitting", animation_
+>> kitten_idle_wait
+1 job(s) finished after 128s, 0 still running: | 1d7fcd98-8037-4812-a6a5-ede44cc22a2a completed (generation, took 129s) -> get_character(character_id="f6c38503-8851-40c6-b1ba-95f3640d9a4d") | hint: nothing else is running
+>> kitten_info
+status: completed | id: f6c38503-8851-40c6-b1ba-95f3640d9a4d | name: Messenger Kitten | state_name: Idle | directions: 4 (south, east, north, west) | size: 68x68px | view: side | style: basic shading, single color black outline, high detail | group: 8d07226f-838b-4259-aeeb-df20f7a243c9 (1 state) |  | rotations: |   south
+>> cave_bg
+id: eeb7c921-1f92-467d-a132-1590b40608c7 | job_id: eeb7c921-1f92-467d-a132-1590b40608c7 | description: cozy underground cave interior background for a platformer, dark blue rock walls, glowing crystals and glowing mushrooms, soft light from above, no characters | size: 400x224px | transparent: False | asset_i
+>> cave_bg_wait
+1 job(s) finished after 28s, 0 still running: | eeb7c921-1f92-467d-a132-1590b40608c7 completed (image_pixflux, took 30s) | hint: nothing else is running
+>> cave_door
+id: 332c91ed-3c90-42ea-8943-00a549e842b1 | job_id: 332c91ed-3c90-42ea-8943-00a549e842b1 | description: dark cave entrance opening in a mossy grey rock, arched black hole, grass on top, side view game prop | size: 96x96px | transparent: True | asset_id: cec29b20-337a-55ed-9d7f-81f3461b8662 | asset_status: pendin
+>> cave_door_wait
+1 job(s) finished after 21s, 0 still running: | 332c91ed-3c90-42ea-8943-00a549e842b1 completed (image_pixflux, took 22s) | hint: nothing else is running
+>> tree_door
+id: 592c2ac3-d697-4b4a-a471-9634938f2b07 | job_id: 592c2ac3-d697-4b4a-a471-9634938f2b07 | description: thick old tree trunk with a dark hollow opening at its base, green leafy crown, side view game prop | size: 96x128px | transparent: True | asset_id: 1a961bf5-c807-5c58-94b2-9e16b3c279ea | asset_status: pending
+>> tree_door_wait
+1 job(s) finished after 18s, 0 still running: | 592c2ac3-d697-4b4a-a471-9634938f2b07 completed (image_pixflux, took 19s) | hint: nothing else is running
+>> life_icon
+id: 7f5bf126-8ccc-457a-b967-677c4c60ee1f | job_id: 7f5bf126-8ccc-457a-b967-677c4c60ee1f | description: extra life pickup icon: cute white cat head with big blue eyes and pink ears, inside a golden glowing circle | size: 32x32px | transparent: True | asset_id: 57b0a31d-61d5-505e-84fa-9c9a0df66afc | asset_status:
+>> life_icon_wait
+1 job(s) finished after 15s, 0 still running: | 7f5bf126-8ccc-457a-b967-677c4c60ee1f completed (image_pixflux, took 16s) | hint: nothing else is running
+== LISTO ==
+credits: $0.00
+generations_remaining: 29
+generations_used: 11
+generations_total: 40
+subscription: trial

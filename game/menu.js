@@ -12,14 +12,15 @@ const isMenuState = () => MENU_STATES.includes(state);
 // ---------- Definición de los menús ----------
 function mainItems() {
   return [
-    { type: 'button', label: t('play'), act: () => { SFX.select(); startGame(); } },
+    { type: 'button', label: t('play'), act: () => { SFX.select(); openMap(); } },
     { type: 'button', label: t('settings'), act: () => openSettings('menu') },
   ];
 }
 function pauseItems() {
   return [
     { type: 'button', label: t('resume'), act: resumeGame },
-    { type: 'button', label: t('restart'), act: () => { SFX.select(); startGame(); } },
+    { type: 'button', label: t('restart'), act: () => { SFX.select(); restartLevel(); } },
+    { type: 'button', label: t('map'), act: () => { SFX.select(); openMap(); } },
     { type: 'button', label: t('settings'), act: () => openSettings('pause') },
     { type: 'button', label: t('mainmenu'), act: openMainMenu },
   ];
@@ -44,7 +45,7 @@ function currentItems() {
 // ---------- Acciones ----------
 function openMainMenu() { state = 'menu'; menuSel = 0; SFX.backSnd(); applyVolumes(); }
 function openSettings(from) { settingsFrom = from; state = 'settings'; menuSel = 0; SFX.select(); }
-function closeSettings() { state = settingsFrom; menuSel = settingsFrom === 'pause' ? 2 : 1; SFX.backSnd(); }
+function closeSettings() { state = settingsFrom; menuSel = settingsFrom === 'pause' ? 3 : 1; SFX.backSnd(); }
 function openPause() { if (state !== 'play') return; state = 'pause'; menuSel = 0; SFX.select(); applyVolumes(); }
 function resumeGame() { state = 'play'; SFX.select(); applyVolumes(); }
 function setFullscreen(on) {

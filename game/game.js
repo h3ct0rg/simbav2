@@ -2,6 +2,9 @@
 // ============================================================
 //  Simba: El camino a casa — plataformas 2D en canvas puro
 //  Sprites generados con PixelLab (ver ../sprites/manifest.js)
+//
+//  Archivos: settings.js (ajustes/idiomas) · save.js (progreso) · levels.js (mapas)
+//            menu.js (menús) · screens.js (mapa, transiciones) · boss.js (jefes) · game.js (motor)
 // ============================================================
 
 const VW = 640, VH = 360, TS = 32;
@@ -9,12 +12,24 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 canvas.width = VW; canvas.height = VH;
 
+// Escala de dibujo interna. El juego se diseña a 640x360 "píxeles lógicos", pero el canvas
+// se dibuja a la resolución REAL de la pantalla (× devicePixelRatio): texto, corazones,
+// pescados y mapa salen nítidos, y los sprites se amplían por un factor ENTERO (RS), así
+// todos sus píxeles miden lo mismo. Antes se estiraba una imagen de 640x360 por un factor
+// no entero y todo se veía dentado y de baja calidad.
+let RS = 1;
 function resize() {
   let s = Math.min(innerWidth / VW, innerHeight / VH);
-  // "Píxel perfecto": escala entera (x1, x2, x3…) para píxeles nítidos y uniformes
-  if (SETTINGS.display === 'pixel' && s >= 1) s = Math.floor(s);
+  const pixel = SETTINGS.display === 'pixel';
+  if (pixel && s >= 1) s = Math.floor(s); // "Píxel perfecto": escala entera en pantalla
+  const dpr = window.devicePixelRatio || 1;
+  RS = Math.max(1, Math.ceil(s * dpr - 0.01));
+  if (canvas.width !== VW * RS) { canvas.width = VW * RS; canvas.height = VH * RS; }
   canvas.style.width = Math.floor(VW * s) + 'px';
   canvas.style.height = Math.floor(VH * s) + 'px';
+  // el canvas es igual o algo mayor que su tamaño en pantalla: un suavizado leve al reducir
+  // da mejor resultado que el "vecino más cercano" (salvo en modo píxel perfecto, donde coincide)
+  canvas.style.imageRendering = pixel && Math.abs(VW * RS - VW * s * dpr) < 1 ? 'pixelated' : 'auto';
 }
 addEventListener('resize', resize); resize();
 
@@ -35,17 +50,25 @@ function loadSet(def) {
   }
   return out;
 }
+const imgOrNull = p => (p ? img(p) : null);
 const A = {
   hero: loadSet(S.hero),
   mother: loadSet(S.mother),
   dog: loadSet(S.dog),
-  bat: S.bat ? img(S.bat) : null,
+  bruto: loadSet(S.bruto),
+  kitten: loadSet(S.kitten),
+  bat: imgOrNull(S.bat),
+  rat: imgOrNull(S.rat),
   motherThin: Array.isArray(S.mother_thin) ? S.mother_thin.map(img) : [], // de la más flaca a la menos
-  rat: S.rat ? img(S.rat) : null,
-  bg: S.bg ? img(S.bg) : null,
+  bg: imgOrNull(S.bg),
+  caveBg: imgOrNull(S.cave_bg),
+  caveDoor: imgOrNull(S.cave_door),
+  treeDoor: imgOrNull(S.tree_door),
+  lifeIcon: imgOrNull(S.life_icon),
   tiles: S.tiles ? Object.fromEntries(Object.entries(S.tiles).map(([k, v]) => [k, img(v)])) : null,
 };
 function anim(set, name) { return set && set.anims[name] && set.anims[name].frames.length ? set.anims[name] : null; }
+const frameAt = (an, t, fps) => an.frames[Math.floor(t * (fps || an.fps)) % an.frames.length];
 
 // Dibuja un frame con los pies en (x, y), centrado horizontalmente
 function drawFrame(f, x, y, flip, sx = 1, sy = 1, alpha = 1) {
@@ -54,8 +77,12 @@ function drawFrame(f, x, y, flip, sx = 1, sy = 1, alpha = 1) {
   ctx.globalAlpha = alpha;
   ctx.translate(Math.round(x), Math.round(y));
   ctx.scale(flip ? -sx : sx, sy);
+  // reducido (p. ej. Simba en el mapa) se suaviza: con "vecino más cercano" se perdían
+  // filas y columnas de píxeles y el sprite se veía deformado
+  if (Math.abs(sx) < 0.99) ctx.imageSmoothingEnabled = true;
   ctx.drawImage(f, -Math.round(f.naturalWidth / 2), -f.naturalHeight);
   ctx.restore();
+  ctx.imageSmoothingEnabled = false;
   return true;
 }
 
@@ -152,9 +179,16 @@ const SFX = {
   fish: () => { beep(988, 988, 0.06, 'triangle', 0.06); beep(1319, 1319, 0.1, 'triangle', 0.06, 0.06); },
   check: () => [523, 659, 784].forEach((f, i) => beep(f, f, 0.12, 'triangle', 0.07, i * 0.09)),
   fall: () => beep(600, 60, 0.6, 'sine', 0.07),
+  die: () => [523, 440, 349, 262, 196].forEach((f, i) => beep(f, f * 0.97, 0.16, 'square', 0.05, i * 0.13)),
   win: () => [523, 659, 784, 1047, 784, 1047].forEach((f, i) => beep(f, f, 0.2, 'triangle', 0.08, i * 0.15)),
   over: () => [392, 330, 262, 196].forEach((f, i) => beep(f, f * 0.98, 0.25, 'square', 0.05, i * 0.22)),
-  nom: n => { const f = 420 + Math.min(n, 23) * 22; beep(f, f * 0.7, 0.08, 'square', 0.05); beep(f * 1.5, f * 1.2, 0.06, 'triangle', 0.04, 0.05); },
+  oneup: () => [784, 988, 1175, 1568, 1319, 1568].forEach((f, i) => beep(f, f, 0.09, 'square', 0.05, i * 0.07)),
+  door: () => { beep(260, 520, 0.18, 'triangle', 0.06); beep(390, 780, 0.18, 'triangle', 0.05, 0.08); },
+  talk: () => beep(880 + Math.random() * 200, 700, 0.03, 'square', 0.025),
+  bark: () => { beep(240, 120, 0.12, 'sawtooth', 0.07); beep(220, 110, 0.12, 'sawtooth', 0.07, 0.16); },
+  thud: () => { beep(140, 40, 0.35, 'sawtooth', 0.09); beep(90, 30, 0.4, 'square', 0.06, 0.02); },
+  bossHit: () => { beep(700, 200, 0.2, 'square', 0.08); beep(350, 90, 0.3, 'sawtooth', 0.06, 0.05); },
+  nom: n => { const f = 420 + Math.min(n, 30) * 18; beep(f, f * 0.7, 0.08, 'square', 0.05); beep(f * 1.5, f * 1.2, 0.06, 'triangle', 0.04, 0.05); },
   grow: () => [659, 880, 1175].forEach((f, i) => beep(f, f, 0.1, 'triangle', 0.07, i * 0.07)),
   move: () => beep(660, 660, 0.05, 'square', 0.035),
   select: () => { beep(784, 784, 0.07, 'square', 0.05); beep(1175, 1175, 0.1, 'square', 0.05, 0.06); },
@@ -164,7 +198,7 @@ const SFX = {
 
 // ---------------- Input ----------------
 const keys = {};
-const touch = { axis: 0, jump: false }; // axis: -1..1 del joystick virtual
+const touch = { axis: 0, axisY: 0, jump: false }; // ejes -1..1 del joystick virtual
 // ?touch=1 fuerza los controles táctiles (útil para probar en PC)
 const IS_TOUCH = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window || /[?&]touch=1/.test(location.search);
 if (IS_TOUCH) document.documentElement.classList.add('touch-mode');
@@ -186,18 +220,25 @@ const inRight = () => keys.ArrowRight || keys.KeyD || touch.axis > 0;
 const inJump = () => JUMP_CODES.some(c => keys[c]) || touch.jump;
 
 function onPress(code) {
+  if (state === 'map') { mapKey(code); return; }
   if (JUMP_CODES.includes(code)) pressJump();
   if (code === 'Enter') pressStart();
-  if (code === 'KeyR' && state === 'play') startGame();
+  if ((code === 'ArrowDown' || code === 'KeyS') && state === 'play') tryDoor();
   if ((code === 'KeyP' || code === 'Escape') && state === 'play') openPause();
-  if (code === 'Escape' && (state === 'gameover' || state === 'win')) openMainMenu();
+  if (code === 'Escape' && (state === 'gameover' || state === 'clear')) pressStart();
 }
 function pressJump() {
   if (state === 'play') player.jumpBuffer = 0.13;
   else pressStart();
 }
+// "Aceptar" en cualquier pantalla que no sea un menú
 function pressStart() {
-  if ((state === 'gameover' && deadT > 0.6) || (state === 'win' && feed.phase === 'done' && feed.doneT > 1.2)) startGame();
+  if (state === 'intro' && introT > 0.4) state = 'play';
+  else if (state === 'talk') advanceTalk();
+  else if (state === 'clear' && clearT > 0.8) finishClear();
+  else if (state === 'win' && feed.phase === 'done' && feed.doneT > 1.2) finishWorld();
+  else if (state === 'gameover' && deadT > 0.8) gameOverContinue();
+  else if (state === 'map') mapPlay();
 }
 
 // ---- Controles táctiles: joystick a la izquierda, salto a la derecha ----
@@ -210,17 +251,22 @@ function goFullscreen() {
 }
 const joy = document.getElementById('joy'), knob = document.getElementById('knob');
 const JR = 46; // radio útil del joystick en px
-let joyId = null, joyCx = 0, joyCy = 0;
+let joyId = null, joyCx = 0, joyCy = 0, joyDown = false;
 function moveJoy(t) {
   let dx = t.clientX - joyCx, dy = t.clientY - joyCy;
   const d = Math.hypot(dx, dy);
   if (d > JR) { dx *= JR / d; dy *= JR / d; }
   knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-  const ax = dx / JR;
+  const ax = dx / JR, ay = dy / JR;
   touch.axis = Math.abs(ax) < 0.22 ? 0 : ax; // zona muerta
+  touch.axisY = ay;
+  // joystick hacia abajo = entrar por una puerta secreta
+  const down = ay > 0.6 && Math.abs(ax) < 0.6;
+  if (down && !joyDown && state === 'play') tryDoor();
+  joyDown = down;
 }
 function releaseJoy() {
-  joyId = null; touch.axis = 0;
+  joyId = null; touch.axis = 0; touch.axisY = 0; joyDown = false;
   knob.style.transform = 'translate(-50%, -50%)';
   joy.classList.remove('on');
 }
@@ -260,50 +306,34 @@ canvas.addEventListener('touchstart', e => {
   if (state === 'play') return;
   e.preventDefault();
   const tc = e.changedTouches[0];
-  if (isMenuState()) menuPointer(tc.clientX, tc.clientY); else pressStart();
+  if (isMenuState()) menuPointer(tc.clientX, tc.clientY);
+  else if (state === 'map') mapPointer(tc.clientX, tc.clientY);
+  else pressStart();
 }, { passive: false });
 canvas.addEventListener('mousedown', e => {
   unlockAudio();
   if (isMenuState()) menuPointer(e.clientX, e.clientY);
+  else if (state === 'map') mapPointer(e.clientX, e.clientY);
   else if (state !== 'play') pressStart();
 });
 canvas.addEventListener('mousemove', e => {
   if (isMenuState()) menuHover(e.clientX, e.clientY);
-  canvas.style.cursor = isMenuState() && hitAt(toCanvas(e.clientX, e.clientY)) ? 'pointer' : 'default';
+  const clickable = (isMenuState() || state === 'map') && hitAt(toCanvas(e.clientX, e.clientY));
+  canvas.style.cursor = clickable ? 'pointer' : 'default';
 });
 // Si el móvil se gira a vertical en plena partida, se pausa
 addEventListener('resize', () => { if (portraitBlocked() && state === 'play') openPause(); });
 const startHint = () => (IS_TOUCH ? t('tap') : t('enter'));
 
-// ---------------- Nivel ----------------
-const COLS = 142, ROWS = 12, G = 9; // G = fila de la superficie del suelo
-let grid;
-const SOLID = 1, ONEWAY = 2;
-function buildLevel() {
-  grid = Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
-  const ground = (a, b, top = G) => { for (let c = a; c <= b; c++) for (let r = top; r < ROWS; r++) grid[r][c] = SOLID; };
-  const plat = (c, r, len) => { for (let i = 0; i < len; i++) grid[r][c + i] = ONEWAY; };
-
-  // Zona 1: inicio tranquilo
-  ground(0, 24);
-  plat(9, 6, 3);
-  // precipicio 25-27
-  ground(28, 45);
-  ground(34, 37, 7);           // escalón alto
-  // precipicio 46-49
-  ground(50, 70);
-  plat(55, 6, 3);
-  plat(60, 4, 3);
-  // precipicio ancho 71-75 con plataforma de apoyo
-  plat(72, 7, 2);
-  ground(76, 100);
-  ground(86, 88, 7);           // muro
-  // precipicio 101-103
-  ground(104, 108);            // islita
-  // precipicio 109-112
-  ground(113, COLS - 1);
-  plat(122, 6, 4);
-  ground(COLS - 3, COLS - 1, 6); // pared final
+// ---------------- Áreas (nivel principal y salas secretas) ----------------
+const SOLID = T_SOLID, ONEWAY = T_ONEWAY;
+let LV = null;        // definición del nivel actual (levels.js)
+let MAIN = null;      // área principal en juego
+let ROOMS = {};       // salas secretas en juego, por id
+let AR = null;        // área actual (MAIN o una sala)
+let grid, COLS, ROWS = LV_ROWS, G = 9;
+function setArea(a) {
+  AR = a; grid = a.grid; COLS = a.cols; ROWS = a.rows; G = a.groundRow;
 }
 function tile(c, r) {
   if (c < 0 || c >= COLS) return SOLID;
@@ -341,62 +371,78 @@ function moveY(e, dy) {
 }
 const overlap = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 
-// ---------------- Entidades ----------------
-let player, enemies, fishes, particles, checkpoint, mother;
-// Alimentar a mamá: los pescados recogidos se le entregan al llegar a la meta
+// ---------------- Estado del juego ----------------
+let player, particles, checkpoint, mother;
+let state = 'menu', hearts = 3, fishCount = 0, timeT = 0, shake = 0, deadT = 0, msgT = 0, msg = '';
+let introT = 0, clearT = 0, dieT = 0, doorT = 0, doorTo = null, talk = null, clearInfo = null;
+let lifesFound = 0;
+let camX = 0, camY = 0;
+
+// Alimentar a mamá (nivel 4): se le entregan los pescados de TODO el mundo
+// (la mejor marca de cada nivel anterior + los de este nivel)
 let feed;
-const newFeed = () => ({ phase: 'walk', fed: 0, toSend: 0, w: 0, stage: 0, spawnT: 0, flying: [], bounce: 0, doneT: 0 });
+const newFeed = () => ({ phase: 'walk', bank: 0, total: 1, fed: 0, toSend: 0, w: 0, stage: 0, spawnT: 0, flying: [], bounce: 0, doneT: 0 });
 const momStage = w => (w < 0.34 ? 0 : w < 0.75 ? 1 : 2); // 0 flaquita · 1 normal · 2 bien alimentada
 // Apariencia visible (0..5): 4 grados de flaquita, luego normal y bien alimentada.
-// Cada salto de apariencia se marca con un "puf", así el engorde se nota paso a paso.
 const THIN_LOOKS = 4;
 function momLook(w) {
   if (w < 0.34) return Math.min(THIN_LOOKS - 1, Math.floor(w / (0.34 / THIN_LOOKS)));
   return w < 0.75 ? THIN_LOOKS : THIN_LOOKS + 1;
 }
-let state = 'menu', hearts = 3, fishCount = 0, timeT = 0, shake = 0, winT = 0, deadT = 0, msgT = 0, msg = '';
-let camX = 0, camY = 0;
+const lookW = look => (look < THIN_LOOKS ? look * 0.34 / THIN_LOOKS : look === THIN_LOOKS ? 0.34 : 0.75);
 
 function makePlayer(x, y) {
   return { x, y, w: 30, h: 26, vx: 0, vy: 0, onGround: false, facing: 1, coyote: 0, jumpBuffer: 0,
     invuln: 0, sx: 1, sy: 1, animT: 0, dustT: 0, prevBottom: 0 };
 }
-function walker(type, col, minC, maxC) {
-  const big = type === 'dog';
-  const w = big ? 38 : 28, h = big ? 28 : 18;
-  return { type, x: col * TS, y: G * TS - h, w, h, vx: (big ? -62 : -105), vy: 0, minX: minC * TS, maxX: (maxC + 1) * TS,
-    alive: true, deadT: 0, animT: Math.random() * 3, onGround: false };
-}
-function bat(col, row, rangeC) {
-  return { type: 'bat', cx: col * TS, baseY: row * TS, range: rangeC * TS, x: col * TS, y: row * TS, w: 28, h: 20,
-    vx: 0, alive: true, deadT: 0, animT: Math.random() * 6, speed: 1.1 };
+const WALK_SPEED = { dog: 62, rat: 105 };
+
+// Construye el estado jugable de un área a partir de su mapa
+function buildArea(rows, isRoom, roomId, style) {
+  const a = parseArea(rows, isRoom);
+  a.roomId = roomId; a.style = style;
+  const d = LV.diff || 1;
+  a.enemies = [
+    ...a.walkers.map(w => {
+      const big = w.type === 'dog', ww = big ? 38 : 28, hh = big ? 28 : 18;
+      return { type: w.type, x: w.c * TS + (TS - ww) / 2, y: (w.r + 1) * TS - hh, w: ww, h: hh, vx: -WALK_SPEED[w.type] * d,
+        speed: WALK_SPEED[w.type] * d, vy: 0, alive: true, deadT: 0, animT: Math.random() * 3, onGround: false };
+    }),
+    ...a.bats.map(b => ({ type: 'bat', cx: b.c * TS, baseY: b.r * TS, range: 4 * TS, x: b.c * TS, y: b.r * TS, w: 28, h: 20,
+      vx: 0, alive: true, deadT: 0, animT: Math.random() * 6, speed: 1.1 * d })),
+  ];
+  a.fishes = a.fish.map(f => ({ x: f.c * TS + 8, y: f.r * TS + 8, w: 16, h: 14, taken: false, t: Math.random() * 6 }));
+  // vidas extra: cada una tiene una clave única y, una vez recogida, no vuelve a aparecer
+  a.oneups = a.lifes.map(l => ({ key: `${LV.id}:${roomId || 'main'}:${l.c},${l.r}`, x: l.c * TS + 4, y: l.r * TS + 4, w: 24, h: 24, t: Math.random() * 6 }))
+    .filter(o => !SAVE.oneups[o.key]);
+  a.doorObjs = a.doors.map(dr => ({ id: dr.id, x: dr.c * TS, y: (dr.r + 1) * TS, style: (LV.rooms[dr.id] || {}).style || 'cave', sparkT: Math.random() * 2 }));
+  if (a.exit) a.exitObj = { x: a.exit.c * TS, y: (a.exit.r + 1) * TS };
+  return a;
 }
 
-function startGame() {
-  buildLevel();
-  player = makePlayer(3 * TS, G * TS - 26);
-  hearts = 3; fishCount = 0; timeT = 0; winT = 0; shake = 0; msgT = 0;
-  feed = newFeed();
-  checkpoint = { x: 64 * TS, active: false, spawnX: 3 * TS, spawnY: G * TS - 26 };
-  mother = { x: 134 * TS, y: G * TS, w: 50, h: 40, animT: 0 };
-  enemies = [
-    walker('rat', 18, 14, 24),
-    walker('dog', 40, 38, 45),
-    bat(60, 5, 6),
-    walker('rat', 82, 77, 85),
-    walker('dog', 94, 89, 100),
-    bat(106, 6, 4),
-    walker('dog', 124, 115, 131),
-  ];
-  fishes = [];
-  const fish = (c, r) => fishes.push({ x: c * TS + 8, y: r * TS + 8, w: 16, h: 14, taken: false, t: Math.random() * 6 });
-  [[5, 8], [7, 8], [10, 5], [11, 5], [26, 6], [35, 6], [36, 6], [47, 6], [48, 6], [56, 5], [61, 3], [62, 3],
-   [72, 6], [73, 6], [80, 8], [87, 6], [102, 6], [106, 8], [110, 6], [111, 6], [123, 5], [124, 5], [125, 5]]
-    .forEach(([c, r]) => fish(c, r));
+// Empieza (o reinicia) un nivel
+function startLevel(id) {
+  LV = levelById(id);
+  MAIN = buildArea(LV.map, false, null, null);
+  ROOMS = {};
+  for (const rid in LV.rooms || {}) ROOMS[rid] = buildArea(LV.rooms[rid].map, true, rid, LV.rooms[rid].style);
+  setArea(MAIN);
+  const sp = MAIN.spawn || { c: 2, r: G - 1 };
+  player = makePlayer(sp.c * TS, (sp.r + 1) * TS - 26);
+  hearts = 3; fishCount = 0; timeT = 0; shake = 0; msgT = 0; lifesFound = 0;
   particles = [];
-  camX = 0; camY = (ROWS * TS - VH);
-  state = 'play';
+  feed = newFeed();
+  checkpoint = MAIN.checkpoint
+    ? { x: MAIN.checkpoint.c * TS, y: (MAIN.checkpoint.r + 1) * TS, active: false, spawnX: player.x, spawnY: player.y }
+    : { x: Infinity, y: 0, active: false, spawnX: player.x, spawnY: player.y };
+  mother = MAIN.mother ? { x: MAIN.mother.c * TS, y: (MAIN.mother.r + 1) * TS, w: 50, h: 40, animT: 0 } : null;
+  MAIN.kitten = MAIN.messenger ? { x: MAIN.messenger.c * TS + 16, y: (MAIN.messenger.r + 1) * TS, animT: 0 } : null;
+  setupBoss(MAIN);
+  snapCamera();
+  introT = 0; state = 'intro';
+  if (LV.id === '1-1') flash(IS_TOUCH ? t('tip_touch') : t('tip_keys'), 4);
 }
+const restartLevel = () => startLevel(LV.id);
 
 // ---------------- Partículas ----------------
 function puff(x, y, n, color, spread = 60, up = 40, life = 0.4, size = 3) {
@@ -407,31 +453,87 @@ function heartBurst(x, y) {
   for (let i = 0; i < 2; i++)
     particles.push({ x: x + (Math.random() - 0.5) * 40, y, vx: (Math.random() - 0.5) * 30, vy: -40 - Math.random() * 40, life: 1.6, max: 1.6, heart: true, g: -10 });
 }
+function updateParticles(dt) {
+  for (const q of particles) { q.life -= dt; q.vy += q.g * dt; q.x += q.vx * dt; q.y += q.vy * dt; }
+  particles = particles.filter(q => q.life > 0);
+}
 
-// ---------------- Update ----------------
+// ---------------- Vida, daño y muerte ----------------
 function hurtPlayer(fromX) {
-  if (player.invuln > 0) return;
+  if (player.invuln > 0 || state !== 'play') return;
   hearts--; shake = 8; SFX.hurt();
   player.invuln = 1.5;
   const away = player.x + player.w / 2 < fromX ? -1 : 1;
   player.vx = away * 260; player.vy = -330;
   puff(player.x + player.w / 2, player.y + player.h / 2, 10, '#ff6b6b', 90, 80);
-  if (hearts <= 0) gameOver();
+  if (hearts <= 0) die();
 }
-function gameOver() { state = 'gameover'; deadT = 0; SFX.over(); }
+// Simba pierde una vida: pequeño salto hacia arriba y cae fuera de la pantalla
+function die(fell) {
+  if (state !== 'play') return;
+  state = 'dying'; dieT = 0; hearts = 0;
+  SFX.die();
+  player.vx = 0; player.vy = fell ? 0 : -460;
+}
+function loseLife() {
+  SAVE.lives = Math.max(0, SAVE.lives - 1); writeSave();
+  if (SAVE.lives <= 0) { state = 'gameover'; deadT = 0; SFX.over(); return; }
+  respawn();
+  introT = 0; state = 'intro';
+}
 function respawn() {
+  setArea(MAIN);
   player.x = checkpoint.spawnX; player.y = checkpoint.spawnY;
-  player.vx = 0; player.vy = 0; player.invuln = 1.5;
+  player.vx = 0; player.vy = 0; player.invuln = 1.5; player.facing = 1;
+  hearts = 3;
+  resetBossFight();
+  snapCamera();
+}
+function gameOverContinue() {
+  SAVE.lives = START_LIVES; writeSave();
+  openMap();
 }
 
+// ---------------- Puertas secretas ----------------
+function doorUnderPlayer() {
+  const px = player.x + player.w / 2, feet = player.y + player.h;
+  const near = d => Math.abs(px - (d.x + TS / 2)) < 22 && Math.abs(feet - d.y) < 10;
+  if (AR.isRoom) return AR.exitObj && near(AR.exitObj) ? { exit: true } : null;
+  return AR.doorObjs.find(near) || null;
+}
+function tryDoor() {
+  if (!player.onGround) return;
+  const d = doorUnderPlayer();
+  if (!d) return;
+  doorTo = d; doorT = 0; state = 'door'; SFX.door();
+}
+function updateDoor(dt) {
+  const prev = doorT; doorT += dt;
+  if (prev < 0.3 && doorT >= 0.3) { // a mitad del fundido se cambia de área
+    if (doorTo.exit) {
+      const back = AR.roomId; setArea(MAIN);
+      const d = MAIN.doorObjs.find(o => o.id === back);
+      player.x = d.x + TS / 2 - player.w / 2; player.y = d.y - player.h;
+    } else {
+      const room = ROOMS[doorTo.id];
+      setArea(room);
+      const sp = room.spawn || room.exit;
+      player.x = sp.c * TS + TS / 2 - player.w / 2; player.y = (sp.r + 1) * TS - player.h;
+    }
+    player.vx = 0; player.vy = 0;
+    snapCamera();
+  }
+  if (doorT >= 0.6) state = 'play';
+}
+
+// ---------------- Update ----------------
 function updatePlayer(dt) {
   const p = player;
   p.prevBottom = p.y + p.h;
   const dir = (inRight() ? 1 : 0) - (inLeft() ? 1 : 0);
   const accel = p.onGround ? 2400 : 1600;
   if (dir) {
-    // Giro rápido: frena extra al cambiar de sentido
-    const turning = p.vx !== 0 && Math.sign(p.vx) !== dir;
+    const turning = p.vx !== 0 && Math.sign(p.vx) !== dir; // giro rápido
     p.vx += dir * accel * dt * (turning ? 1.8 : 1);
     p.facing = dir;
   } else {
@@ -464,8 +566,7 @@ function updatePlayer(dt) {
     p.sx = 1.25; p.sy = 0.78;
     puff(p.x + p.w / 2, p.y + p.h, 8, '#e8dcc0', 70, 25, 0.35);
   }
-  // Polvo al correr
-  if (p.onGround && Math.abs(p.vx) > 150) {
+  if (p.onGround && Math.abs(p.vx) > 150) { // polvo al correr
     p.dustT -= dt;
     if (p.dustT <= 0) { p.dustT = 0.09; puff(p.x + p.w / 2 - p.facing * 10, p.y + p.h, 1, '#e8dcc0', 15, 15, 0.3, 2); }
   }
@@ -474,30 +575,23 @@ function updatePlayer(dt) {
   p.invuln = Math.max(0, p.invuln - dt);
   p.animT += dt;
 
-  // Caída al vacío
-  if (p.y > ROWS * TS + 60) {
-    hearts--; shake = 6; SFX.fall();
-    if (hearts <= 0) gameOver(); else { respawn(); flash(t('careful')); }
-  }
-  // Checkpoint
-  if (!checkpoint.active && p.x > checkpoint.x) {
+  if (p.y > ROWS * TS + 40) { SFX.fall(); die(true); return; } // precipicio: se pierde una vida
+  if (!AR.isRoom && !checkpoint.active && p.x > checkpoint.x) {
     checkpoint.active = true;
-    checkpoint.spawnX = checkpoint.x; checkpoint.spawnY = G * TS - p.h;
+    checkpoint.spawnX = checkpoint.x; checkpoint.spawnY = checkpoint.y - p.h;
     SFX.check(); flash(t('checkpoint'));
-    puff(checkpoint.x + 8, G * TS - 60, 16, '#7cf27c', 80, 80, 0.7);
+    puff(checkpoint.x + 8, checkpoint.y - 60, 16, '#7cf27c', 80, 80, 0.7);
   }
 }
 
 function updateEnemies(dt) {
   const p = player;
-  for (const e of enemies) {
+  for (const e of AR.enemies) {
     e.animT += dt;
     if (!e.alive) { e.deadT += dt; continue; }
     if (e.type === 'bat') {
-      const ox = Math.sin(e.animT * e.speed) * e.range;
-      const nx = e.cx + ox;
-      e.vx = (nx - e.x) / dt;
-      e.x = nx;
+      const nx = e.cx + Math.sin(e.animT * e.speed) * e.range;
+      e.vx = (nx - e.x) / dt; e.x = nx;
       e.y = e.baseY + Math.sin(e.animT * 3.2) * 14;
     } else {
       e.vy = Math.min(e.vy + GRAV * dt, MAXFALL);
@@ -505,11 +599,8 @@ function updateEnemies(dt) {
       moveY(e, e.vy * dt);
       const front = e.vx > 0 ? e.x + e.w + 2 : e.x - 2;
       const ledge = e.onGround && tile(Math.floor(front / TS), Math.floor((e.y + e.h + 4) / TS)) === 0;
-      if (e.hitWall || ledge || (e.vx < 0 && e.x <= e.minX) || (e.vx > 0 && e.x + e.w >= e.maxX)) {
-        const sp = e.type === 'dog' ? 62 : 105;
-        e.vx = e.hitWall ? -e.hitWall * sp : (e.vx > 0 ? -sp : sp);
-        if (e.vx === 0) e.vx = sp;
-      }
+      if (e.hitWall || ledge) e.vx = e.hitWall ? -e.hitWall * e.speed : -Math.sign(e.vx || 1) * e.speed;
+      if (e.y > ROWS * TS + 100) e.alive = false;
     }
     // Colisión con el jugador (hitbox algo más indulgente)
     const hb = { x: e.x + 4, y: e.y + 4, w: e.w - 8, h: e.h - 4 };
@@ -526,76 +617,105 @@ function updateEnemies(dt) {
 }
 
 function updateWorld(dt) {
-  for (const f of fishes) {
+  for (const f of AR.fishes) {
     f.t += dt;
     if (!f.taken && overlap(player, f)) {
       f.taken = true; fishCount++; SFX.fish();
       puff(f.x + 8, f.y + 7, 8, '#ffd23f', 50, 60, 0.4);
     }
   }
-  for (const q of particles) { q.life -= dt; q.vy += q.g * dt; q.x += q.vx * dt; q.y += q.vy * dt; }
-  particles = particles.filter(q => q.life > 0);
-  mother.animT += dt;
+  for (const o of AR.oneups) {
+    o.t += dt;
+    if (!o.taken && overlap(player, o)) {
+      o.taken = true; lifesFound++;
+      SAVE.lives = Math.min(MAX_LIVES, SAVE.lives + 1);
+      SAVE.oneups[o.key] = true; writeSave();
+      SFX.oneup(); flash(t('oneup'));
+      puff(o.x + 12, o.y + 12, 20, '#fff3b0', 90, 90, 0.7);
+    }
+  }
+  for (const d of AR.doorObjs || []) { // destellos sutiles que delatan la entrada secreta
+    d.sparkT -= dt;
+    if (d.sparkT <= 0) { d.sparkT = 0.5 + Math.random() * 1.2; particles.push({ x: d.x + 6 + Math.random() * 20, y: d.y - 10 - Math.random() * 30, vx: 0, vy: -12, life: 0.9, max: 0.9, color: '#fff7c2', size: 2, g: 0 }); }
+  }
+  updateParticles(dt);
+  if (mother) mother.animT += dt;
+  if (AR.kitten) AR.kitten.animT += dt;
 
-  // Meta: llegar con mamá
-  if (state === 'play' && player.x + player.w > mother.x - 34) {
-    state = 'win'; winT = 0; SFX.check();
-    player.vx = 0;
+  if (state === 'play' && !AR.isRoom) {
+    // Meta de los niveles 1-3: el gatito mensajero
+    const k = MAIN.kitten;
+    if (k && player.onGround && Math.abs(player.x + player.w / 2 - k.x) < 56) startTalk();
+    // Meta del nivel 4: mamá (solo cuando el jefe ya no está)
+    if (mother && bossCleared() && player.x + player.w > mother.x - 34) {
+      state = 'win'; SFX.check(); player.vx = 0;
+      startFeeding();
+    }
   }
   msgT = Math.max(0, msgT - dt);
 }
 
 function updateCamera(dt) {
   const p = player;
-  const tx = clamp(p.x + p.w / 2 - VW / 2 + p.facing * 50, 0, COLS * TS - VW);
+  let lo = 0, hi = COLS * TS - VW;
+  const lock = arenaCameraLock();
+  if (lock !== null) lo = hi = lock;
+  const tx = clamp(p.x + p.w / 2 - VW / 2 + p.facing * 50, lo, hi);
   const ty = clamp(p.y - VH * 0.55, 0, ROWS * TS - VH);
-  camX = lerp(camX, tx, Math.min(1, dt * 5));
+  camX = lerp(camX, tx, Math.min(1, dt * (lock !== null ? 3 : 5)));
   camY = lerp(camY, ty, Math.min(1, dt * 4));
 }
-
-function flash(t) { msg = t; msgT = 1.8; }
-
-function update(dt) {
-  // El temblor decae en cualquier estado (antes quedaba congelado en game over / pausa)
-  shake = Math.max(0, shake - dt * 30);
-  if (state === 'play') {
-    timeT += dt;
-    updatePlayer(dt);
-    updateEnemies(dt);
-    updateWorld(dt);
-    updateCamera(dt);
-  } else if (state === 'win') {
-    winT += dt;
-    // El gatito camina solo hasta su mamá
-    const p = player;
-    const target = mother.x - 40 - p.w;
-    p.facing = 1;
-    p.vx = p.x < target ? 120 : 0;
-    p.vy = Math.min(p.vy + GRAV * dt, MAXFALL);
-    moveX(p, p.vx * dt); moveY(p, p.vy * dt);
-    p.animT += dt;
-    updateFeeding(dt, p.x >= target - 1);
-    for (const e of enemies) if (!e.alive) e.deadT += dt; // los pisados se terminan de desvanecer
-    updateWorld(dt);
-    updateCamera(dt);
-  } else if (state === 'gameover') {
-    deadT += dt;
-    for (const q of particles) { q.life -= dt; q.vy += q.g * dt; q.x += q.vx * dt; q.y += q.vy * dt; }
-    particles = particles.filter(q => q.life > 0);
-  }
+function snapCamera() {
+  camX = clamp(player.x + player.w / 2 - VW / 2, 0, Math.max(0, COLS * TS - VW));
+  camY = clamp(player.y - VH * 0.55, 0, ROWS * TS - VH);
 }
 
-// Boca de mamá (mira a la izquierda) y punto de salida de los pescados desde Simba
-// peso mínimo de cada apariencia (para saber si un salto cambia de etapa)
-const lookW = look => (look < THIN_LOOKS ? look * 0.34 / THIN_LOOKS : look === THIN_LOOKS ? 0.34 : 0.75);
+function flash(text, dur = 1.8) { msg = text; msgT = dur; }
+
+// ---------------- Mensajero y fin de nivel ----------------
+function startTalk() {
+  state = 'talk'; player.vx = 0;
+  const lines = (LV.say && (LV.say[SETTINGS.lang] || LV.say.es)) || [];
+  talk = { lines, i: 0, t: 0 };
+}
+function advanceTalk() {
+  const cur = talk.lines[talk.i] || '';
+  if (talk.t * 40 < cur.length) { talk.t = 999; return; } // primero completa la frase
+  talk.i++; talk.t = 0;
+  if (talk.i >= talk.lines.length) completeLevel();
+}
+const levelTotalFish = () => levelFishTotal(LV);
+const starsFor = ratio => 1 + (ratio >= 0.5 ? 1 : 0) + (ratio >= 1 ? 1 : 0);
+function completeLevel() {
+  const total = levelTotalFish();
+  const stars = starsFor(fishCount / total);
+  recordLevel(LV.id, stars, fishCount);
+  clearInfo = { stars, fish: fishCount, total, lifes: lifesFound, time: timeT };
+  state = 'clear'; clearT = 0; SFX.win();
+}
+function finishClear() { openMap(LV.index + 1 + WORLDS.indexOf(LV.world) * LEVELS_PER_WORLD); }
+
+// ---------------- Alimentar a mamá (fin de mundo) ----------------
+function startFeeding() {
+  const w = LV.world;
+  const others = w.levels.filter(l => l.id !== LV.id);
+  feed.bank = fishCount + others.reduce((s, l) => s + levelStats(l.id).fish, 0);
+  feed.total = w.levels.reduce((s, l) => s + levelFishTotal(l), 0);
+}
+function finishWorld() {
+  const ratio = feed.fed / feed.total;
+  recordLevel(LV.id, starsFor(ratio), fishCount);
+  SAVE.worldsDone = Object.assign(SAVE.worldsDone || {}, { [LV.world.id]: true }); writeSave();
+  openMap(SAVE.mapSel);
+}
 const momMouth = () => ({ x: mother.x + mother.w / 2 - 20, y: mother.y - 26 });
 function updateFeeding(dt, arrived) {
-  const F = feed, total = fishes.length;
+  const F = feed;
   F.bounce = Math.max(0, F.bounce - dt * 4);
-  F.w = lerp(F.w, F.fed / total, Math.min(1, dt * 5)); // el peso sube suave, no a saltos
+  F.w = lerp(F.w, F.fed / F.total, Math.min(1, dt * 5)); // el peso sube suave, no a saltos
   const look = momLook(F.w);
   if (look > F.stage) { // cambio de apariencia: nube "puf", destellos y sonido
-    const big = momStage(F.w) !== momStage(lookW(F.stage)); // de etapa (flaca→normal→llenita)
+    const big = momStage(F.w) !== momStage(lookW(F.stage));
     F.stage = look; SFX.grow();
     const cx = mother.x + mother.w / 2, cy = mother.y - 20;
     puff(cx, cy, big ? 30 : 16, '#ffffff', big ? 70 : 45, big ? 60 : 40, big ? 0.55 : 0.4, big ? 6 : 4);
@@ -604,8 +724,8 @@ function updateFeeding(dt, arrived) {
   }
   F.flash = Math.max(0, (F.flash || 0) - dt * 3);
   if (F.phase === 'walk' && arrived) {
-    F.phase = fishCount > 0 ? 'feed' : 'done';
-    F.toSend = fishCount; F.spawnT = 0.35;
+    F.phase = F.bank > 0 ? 'feed' : 'done';
+    F.toSend = F.bank; F.spawnT = 0.35;
   }
   if (F.phase === 'feed') {
     F.spawnT -= dt;
@@ -613,20 +733,21 @@ function updateFeeding(dt, arrived) {
       F.toSend--;
       const m = momMouth();
       F.flying.push({ x0: player.x + player.w / 2 + 8, y0: player.y + 2, x1: m.x, y1: m.y, t: 0, dur: 0.45 });
-      F.spawnT = clamp(2.4 / fishCount, 0.11, 0.3); // con muchos pescados la entrega acelera
-      beep(700, 900, 0.05, 'triangle', 0.03);
+      F.spawnT = clamp(5 / F.bank, 0.035, 0.3); // la entrega dura como mucho ~5 s
+      if (F.bank < 40 || F.toSend % 2 === 0) beep(700, 900, 0.05, 'triangle', 0.03);
     }
-    if (F.toSend === 0 && F.flying.length === 0 && Math.abs(F.w - F.fed / total) < 0.01) {
+    if (F.toSend === 0 && F.flying.length === 0 && Math.abs(F.w - F.fed / F.total) < 0.01) {
       F.phase = 'done'; F.doneT = 0; SFX.win();
     }
   }
   for (const f of F.flying) {
     f.t += dt;
     if (f.t >= f.dur) {
-      f.done = true; F.fed++; F.bounce = 1; SFX.nom(F.fed);
+      f.done = true; F.fed++; F.bounce = 1;
+      if (F.bank < 40 || F.fed % 2 === 0) SFX.nom(F.fed);
       const m = momMouth();
       puff(m.x, m.y, 5, '#ffd23f', 40, 40, 0.35, 2);
-      if (Math.random() < 0.4) heartBurst(m.x + 10, m.y - 10);
+      if (Math.random() < 0.3) heartBurst(m.x + 10, m.y - 10);
     }
   }
   F.flying = F.flying.filter(f => !f.done);
@@ -636,10 +757,58 @@ function updateFeeding(dt, arrived) {
   }
 }
 
+// ---------------- Bucle de estados ----------------
+function update(dt) {
+  shake = Math.max(0, shake - dt * 30); // el temblor decae en cualquier estado
+  if (state === 'play') {
+    timeT += dt;
+    updatePlayer(dt);
+    if (state === 'play') updateEnemies(dt);
+    updateArena(dt);
+    updateWorld(dt);
+    updateCamera(dt);
+  } else if (state === 'intro') {
+    introT += dt;
+    if (introT > 2.4) state = 'play';
+  } else if (state === 'dying') {
+    dieT += dt;
+    if (dieT > 0.35) { player.vy = Math.min(player.vy + GRAV * dt, MAXFALL * 1.4); player.y += player.vy * dt; }
+    updateParticles(dt);
+    if (dieT > 1.6) loseLife();
+  } else if (state === 'door') {
+    updateDoor(dt); updateParticles(dt);
+  } else if (state === 'talk') {
+    const prevChars = Math.floor(talk.t * 40);
+    talk.t += dt;
+    if (Math.floor(talk.t * 40) > prevChars && talk.t * 40 < (talk.lines[talk.i] || '').length && prevChars % 3 === 0) SFX.talk();
+    player.vy = Math.min(player.vy + GRAV * dt, MAXFALL); moveY(player, player.vy * dt);
+    player.animT += dt;
+    updateParticles(dt);
+    if (AR.kitten) AR.kitten.animT += dt;
+  } else if (state === 'clear') {
+    clearT += dt; updateParticles(dt);
+  } else if (state === 'win') {
+    // Simba camina solo hasta su mamá y le entrega los pescados
+    const p = player, target = mother.x - 40 - p.w;
+    p.facing = 1;
+    p.vx = p.x < target ? 120 : 0;
+    p.vy = Math.min(p.vy + GRAV * dt, MAXFALL);
+    moveX(p, p.vx * dt); moveY(p, p.vy * dt);
+    p.animT += dt;
+    updateFeeding(dt, p.x >= target - 1);
+    for (const e of AR.enemies) if (!e.alive) e.deadT += dt;
+    updateWorld(dt);
+    updateCamera(dt);
+  } else if (state === 'gameover') {
+    deadT += dt; updateParticles(dt);
+  } else if (state === 'map') {
+    updateMap(dt);
+  }
+}
+
 // ---------------- Render ----------------
-// El fondo se ancla al suelo: la BASE de su pradera (fila BG_HORIZON de la imagen,
-// donde la hierba con flores se junta con la tierra) coincide con el césped jugable.
-// Así hierba y flores del fondo crecen a la misma altura que el suelo del nivel.
+// El fondo se ancla al suelo: la BASE de su pradera (fila BG_HORIZON de la imagen)
+// coincide con el césped jugable; así sus colinas se leen como paisaje lejano.
 const BG_HORIZON = 214;
 const BG_SINK = 3; // px: la base queda apenas por debajo, tapada por las matas del césped
 function drawBackground(cx, groundY) {
@@ -658,14 +827,23 @@ function drawBackground(cx, groundY) {
       else { ctx.save(); ctx.translate(xr + wr, y0); ctx.scale(-1, 1); ctx.drawImage(A.bg, 0, 0, wr, h); ctx.restore(); }
     }
   }
-  // Bruma atmosférica: aclara y desatura el fondo para separarlo del primer plano
-  ctx.fillStyle = 'rgba(214,240,255,0.22)';
+  ctx.fillStyle = 'rgba(214,240,255,0.1)'; // bruma atmosférica leve (separa fondo y primer plano sin apagar los colores)
+  ctx.fillRect(0, 0, VW, VH);
+}
+// Fondo de las salas secretas (cueva o interior del árbol)
+function drawRoomBackground(cx) {
+  ctx.fillStyle = '#120c22'; ctx.fillRect(0, 0, VW, VH);
+  if (ok(A.caveBg)) {
+    const s = Math.max(VW / A.caveBg.naturalWidth, VH / A.caveBg.naturalHeight) * 1.08;
+    const w = A.caveBg.naturalWidth * s, h = A.caveBg.naturalHeight * s;
+    ctx.drawImage(A.caveBg, Math.round(-(w - VW) / 2 - cx * 0.08), Math.round(VH - h), w, h);
+  }
+  // el interior del árbol se tiñe de madera cálida
+  ctx.fillStyle = AR.style === 'tree' ? 'rgba(120,70,30,0.35)' : 'rgba(20,10,40,0.25)';
   ctx.fillRect(0, 0, VW, VH);
 }
 
-// Abismo oscuro bajo el nivel del suelo: hace que los precipicios se lean como tales
-// Abismo bajo el nivel del suelo: la hierba y flores del fondo se ven completas en los
-// precipicios (su base está a la altura del suelo) y justo debajo empieza la oscuridad.
+// Abismo bajo el nivel del suelo: la hierba del fondo se ve completa en los precipicios
 function drawAbyss(cy) {
   const fadeStart = G * TS - cy + BG_SINK, fadeEnd = fadeStart + 16;
   const g = ctx.createLinearGradient(0, fadeStart, 0, fadeEnd);
@@ -699,17 +877,11 @@ function drawTiles(cx, cy) {
     }
   }
   for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
-    const t = tile(c, r);
     if (r < 0 || r >= ROWS || c < 0 || c >= COLS) continue;
-    const x = c * TS - cx, y = r * TS - cy;
-    if (t === SOLID) {
-      if (useWang) continue;
-      const top = tile(c, r - 1) !== SOLID;
-      {
-        ctx.fillStyle = '#8b5a2b'; ctx.fillRect(x, y, TS, TS);
-        ctx.fillStyle = '#7a4d22'; ctx.fillRect(x + 4, y + 10, 6, 4); ctx.fillRect(x + 20, y + 22, 5, 4);
-        if (top) { ctx.fillStyle = '#4caf50'; ctx.fillRect(x, y, TS, 9); ctx.fillStyle = '#7ed957'; ctx.fillRect(x, y, TS, 3); }
-      }
+    const t = tile(c, r), x = c * TS - cx, y = r * TS - cy;
+    if (t === SOLID && !useWang) {
+      ctx.fillStyle = '#8b5a2b'; ctx.fillRect(x, y, TS, TS);
+      if (tile(c, r - 1) !== SOLID) { ctx.fillStyle = '#4caf50'; ctx.fillRect(x, y, TS, 9); }
     } else if (t === ONEWAY) {
       // Tablón de madera (se atraviesa desde abajo)
       ctx.fillStyle = '#5b3a1e'; ctx.fillRect(x, y, TS, 12);
@@ -747,15 +919,78 @@ function drawHeart(x, y, s, fill) {
   ctx.restore();
 }
 
+// Icono de vida (cabecita de Simba). Se usa en el HUD, el mapa y las vidas escondidas.
+function drawLifeIcon(x, y, size = 24) {
+  if (ok(A.lifeIcon)) {
+    ctx.imageSmoothingEnabled = size < A.lifeIcon.naturalWidth; // reducido: suave, no pixelado irregular
+    ctx.drawImage(A.lifeIcon, Math.round(x - size / 2), Math.round(y - size / 2), size, size);
+    ctx.imageSmoothingEnabled = false;
+    return;
+  }
+  const s = size / 24;
+  ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.scale(s, s);
+  ctx.fillStyle = '#1b1b2f';
+  ctx.beginPath(); ctx.moveTo(-10, -2); ctx.lineTo(-8, -12); ctx.lineTo(-2, -7); ctx.lineTo(2, -7); ctx.lineTo(8, -12); ctx.lineTo(10, -2); ctx.arc(0, 1, 10.5, 0, Math.PI); ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath(); ctx.moveTo(-9, -2); ctx.lineTo(-7.5, -10); ctx.lineTo(-2, -6); ctx.lineTo(2, -6); ctx.lineTo(7.5, -10); ctx.lineTo(9, -2); ctx.arc(0, 1, 9, 0, Math.PI); ctx.fill();
+  ctx.fillStyle = '#ffb3c8'; ctx.fillRect(-7, -8, 2, 3); ctx.fillRect(5, -8, 2, 3);
+  ctx.fillStyle = '#2b6cff'; ctx.fillRect(-5, -1, 3, 3); ctx.fillRect(2, -1, 3, 3);
+  ctx.fillStyle = '#ff8fb0'; ctx.fillRect(-1, 3, 2, 2);
+  ctx.restore();
+}
+function drawOneup(o, cx, cy) {
+  if (o.taken) return;
+  const x = o.x + 12 - cx, y = o.y + 12 - cy + Math.sin(o.t * 3) * 3;
+  const g = ctx.createRadialGradient(x, y, 2, x, y, 20);
+  g.addColorStop(0, `rgba(255,240,170,${0.55 + Math.sin(o.t * 5) * 0.15})`); g.addColorStop(1, 'rgba(255,240,170,0)');
+  ctx.fillStyle = g; ctx.fillRect(x - 20, y - 20, 40, 40);
+  drawLifeIcon(x, y, 24);
+}
+
+function drawDoor(d, cx, cy) {
+  const im = d.style === 'tree' ? A.treeDoor : A.caveDoor;
+  const x = d.x + TS / 2 - cx, y = d.y - cy + 4;
+  if (d.style !== 'tree' && ok(im)) {
+    // el arco del sprite es hueco: se rellena con la oscuridad de la cueva
+    const w = im.naturalWidth * 0.5, h = im.naturalHeight * 0.74;
+    const g = ctx.createLinearGradient(0, y - h, 0, y);
+    g.addColorStop(0, '#05030b'); g.addColorStop(1, '#1a1430');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.ellipse(x, y - h + w / 2, w / 2, w / 2, 0, Math.PI, 0); ctx.lineTo(x + w / 2, y - 4); ctx.lineTo(x - w / 2, y - 4); ctx.fill();
+  }
+  if (!drawFrame(im, x, y, false)) {
+    ctx.fillStyle = d.style === 'tree' ? '#6b4423' : '#6b6f7a';
+    ctx.fillRect(Math.round(x - 26), Math.round(y - 60), 52, 60);
+    ctx.fillStyle = '#0d0a14'; ctx.beginPath(); ctx.ellipse(x, y - 14, 13, 18, 0, Math.PI, 0); ctx.fillRect(x - 13, y - 14, 26, 14); ctx.fill();
+  }
+}
+function drawExitDoor(cx, cy) {
+  if (!AR.exitObj) return;
+  const x = AR.exitObj.x + TS / 2 - cx, y = AR.exitObj.y - cy;
+  // portal de luz hacia el exterior
+  const g = ctx.createRadialGradient(x, y - 22, 2, x, y - 22, 30);
+  g.addColorStop(0, 'rgba(255,250,210,0.95)'); g.addColorStop(1, 'rgba(255,250,210,0)');
+  ctx.fillStyle = g; ctx.fillRect(x - 32, y - 56, 64, 56);
+  ctx.fillStyle = '#fff7c9'; ctx.beginPath(); ctx.ellipse(x, y - 16, 12, 17, 0, Math.PI, 0); ctx.fillRect(x - 12, y - 16, 24, 16); ctx.fill();
+}
+// Flechita "↓" sobre Simba cuando puede entrar por una puerta
+function drawDoorPrompt(cx, cy) {
+  if (state !== 'play' || !player.onGround || !doorUnderPlayer()) return;
+  const x = player.x + player.w / 2 - cx, y = player.y - cy - 26 + Math.sin(timeT * 6) * 3;
+  ctx.fillStyle = '#1b1b2f'; ctx.beginPath(); ctx.moveTo(x - 9, y - 4); ctx.lineTo(x + 9, y - 4); ctx.lineTo(x, y + 8); ctx.fill();
+  ctx.fillStyle = '#fff3b0'; ctx.beginPath(); ctx.moveTo(x - 6, y - 2); ctx.lineTo(x + 6, y - 2); ctx.lineTo(x, y + 5); ctx.fill();
+  ctx.fillRect(x - 2, y - 10, 4, 8);
+}
+
 function drawCheckpoint(cx, cy) {
-  const x = Math.round(checkpoint.x - cx), y = G * TS - cy;
+  if (!isFinite(checkpoint.x) || AR.isRoom) return;
+  const x = Math.round(checkpoint.x - cx), y = checkpoint.y - cy;
   ctx.fillStyle = '#5b5b5b'; ctx.fillRect(x, y - 64, 4, 64);
   ctx.fillStyle = '#3a3a3a'; ctx.fillRect(x - 3, y - 4, 10, 4);
   const wave = Math.sin(timeT * 6) * 2;
   ctx.fillStyle = checkpoint.active ? '#4ade80' : '#d1d5db';
   ctx.beginPath(); ctx.moveTo(x + 4, y - 62); ctx.lineTo(x + 30, y - 54 + wave); ctx.lineTo(x + 4, y - 44); ctx.fill();
-  // huellita
-  ctx.fillStyle = checkpoint.active ? '#166534' : '#6b7280';
+  ctx.fillStyle = checkpoint.active ? '#166534' : '#6b7280'; // huellita
   ctx.beginPath(); ctx.arc(x + 13, y - 52, 3, 0, Math.PI * 2); ctx.fill();
   [[-3, -5], [2, -6], [6, -3]].forEach(([dx, dy]) => { ctx.beginPath(); ctx.arc(x + 13 + dx, y - 52 + dy, 1.3, 0, Math.PI * 2); ctx.fill(); });
 }
@@ -772,28 +1007,27 @@ function drawPlayer(cx, cy) {
   const flip = p.facing < 0;
   let f = null;
   const run = anim(A.hero, 'run'), jump = anim(A.hero, 'jump'), idle = anim(A.hero, 'idle');
+  if (state === 'dying') {
+    f = jump ? jump.frames[4 % jump.frames.length] : null;
+    drawFrame(f, fx, fy, flip, 1, -1); // Simba "de espaldas" mientras cae
+    return;
+  }
   if (!p.onGround && state === 'play') {
     if (jump) {
-      // Frame según la velocidad vertical (subida → ápice → caída)
-      const n = jump.frames.length;
+      const n = jump.frames.length; // frame según la velocidad vertical (subida → ápice → caída)
       const t = clamp((p.vy + JUMP) / (2 * JUMP), 0, 1);
-      const i0 = Math.min(3, n - 1), i1 = Math.min(5, n - 1); // frames: 3 impulso, 4 ápice, 5 caída
-      f = jump.frames[Math.round(lerp(i0, i1, t))];
+      f = jump.frames[Math.round(lerp(Math.min(3, n - 1), Math.min(5, n - 1), t))];
     } else if (run) f = run.frames[1 % run.frames.length];
   } else if (Math.abs(p.vx) > 12 && run) {
-    const fps = 6 + Math.abs(p.vx) / MAXV * 8;
-    f = run.frames[Math.floor(p.animT * fps) % run.frames.length];
+    f = frameAt(run, p.animT, 6 + Math.abs(p.vx) / MAXV * 8);
   } else if (idle) {
-    f = idle.frames[Math.floor(p.animT * idle.fps) % idle.frames.length];
+    f = frameAt(idle, p.animT);
   } else if (run) f = run.frames[0];
 
-  // Sombra de contacto: ancla visualmente a Simba al suelo
   if (p.onGround || state === 'win') groundShadow(fx, fy - 2, 22 * p.sx);
   if (!drawFrame(f, fx, fy, flip, p.sx, p.sy)) {
-    // Respaldo si no cargan los sprites
     ctx.save(); ctx.translate(Math.round(fx), Math.round(fy)); ctx.scale(p.sx, p.sy);
     ctx.fillStyle = '#fff'; ctx.fillRect(-p.w / 2, -p.h, p.w, p.h);
-    ctx.fillStyle = '#2b6cff'; ctx.fillRect(p.facing > 0 ? 6 : -10, -p.h + 6, 4, 4);
     ctx.restore();
   }
 }
@@ -802,10 +1036,10 @@ function drawEnemy(e, cx, cy) {
   let alpha = 1, sy = 1;
   if (!e.alive) { if (e.deadT > 0.5) return; alpha = 1 - e.deadT / 0.5; sy = 0.35; }
   const fx = e.x + e.w / 2 - cx, fy = e.y + e.h - cy + (e.type === 'bat' ? 6 : 1);
+  if (fx < -80 || fx > VW + 80) return;
   if (e.type === 'dog') {
     const w = anim(A.dog, 'walk');
-    const f = w ? w.frames[Math.floor(e.animT * w.fps) % w.frames.length] : null;
-    if (drawFrame(f, fx, fy, e.vx < 0, 1, sy, alpha)) return;
+    if (w && drawFrame(frameAt(w, e.animT), fx, fy, e.vx < 0, 1, sy, alpha)) return;
   } else if (e.type === 'rat') {
     const bob = e.alive ? Math.abs(Math.sin(e.animT * 14)) * 2 : 0;
     // El sprite de la rata mira a la izquierda: se espeja al ir a la derecha
@@ -814,32 +1048,47 @@ function drawEnemy(e, cx, cy) {
     const flap = e.alive ? 1 + Math.sin(e.animT * 18) * 0.12 : 1;
     if (drawFrame(A.bat, fx, fy, e.vx > 0, 1, sy * flap, alpha)) return;
   }
-  // Respaldo
   ctx.globalAlpha = alpha;
   ctx.fillStyle = e.type === 'dog' ? '#8b5a2b' : e.type === 'bat' ? '#7b3fa0' : '#777';
   ctx.fillRect(Math.round(fx - e.w / 2), Math.round(fy - e.h * sy), e.w, e.h * sy);
   ctx.globalAlpha = 1;
 }
 
+// Gatito mensajero: sentado, con un "!" encima hasta que Simba llega
+function drawKitten(cx, cy) {
+  const k = AR.kitten;
+  if (!k) return;
+  const fx = k.x - cx, fy = k.y - cy + 2;
+  const sit = anim(A.kitten, 'sit') || anim(A.kitten, 'idle');
+  groundShadow(fx, fy - 2, 14);
+  if (!(sit && drawFrame(frameAt(sit, k.animT, 5), fx, fy, true))) {
+    ctx.fillStyle = '#f2a65a'; ctx.fillRect(Math.round(fx - 12), Math.round(fy - 22), 24, 22);
+  }
+  if (state === 'play') {
+    const y = fy - 52 + Math.sin(timeT * 4) * 3;
+    pixRect(fx - 9, y - 11, 18, 22, '#1b1b2f'); pixRect(fx - 7, y - 9, 14, 18, '#ffffff');
+    text('!', fx + 1, y + 1, 10, '#ff6b9a');
+  }
+}
+
 function drawMother(cx, cy) {
+  if (!mother || AR.isRoom) return;
   const fx = mother.x + mother.w / 2 - cx, fy = mother.y - cy + 1;
-  // Peso 0..1 (pescados entregados / total):
-  //   etapa flaquita -> sprite delgado, estrechado y ensanchándose poco a poco
-  //   después        -> sprite peludo con idle, de 86% a 110% de ancho
+  if (fx < -100 || fx > VW + 100) return;
+  // Peso 0..1 (pescados entregados / total del mundo)
   const w = feed.w, idle = anim(A.mother, 'idle');
   let f, sx, sy = 1;
   const look = momLook(w);
   if (look < THIN_LOOKS && ok(A.motherThin[look])) {
-    f = A.motherThin[look];                       // flaquita: cintura metida, patas largas
+    f = A.motherThin[look];                         // flaquita: cintura metida, patas largas
     sx = 1;
-    sy = 1 + Math.sin(mother.animT * 2.4) * 0.012; // respiración suave
+    sy = 1 + Math.sin(mother.animT * 2.4) * 0.012;  // respiración suave
   } else {
-    f = idle ? idle.frames[Math.floor(mother.animT * idle.fps) % idle.frames.length] : null;
-    if (look === THIN_LOOKS) { sx = lerp(0.92, 1.04, (w - 0.34) / 0.41); }          // normal
+    f = idle ? frameAt(idle, mother.animT) : null;
+    if (look === THIN_LOOKS) sx = lerp(0.92, 1.04, (w - 0.34) / 0.41);                                  // normal
     else { const k = clamp((w - 0.75) / 0.25, 0, 1); sx = lerp(1.06, 1.2, k); sy = lerp(1, 1.06, k); } // llenita
   }
-  // rebote al tragar cada pescado
-  const b = feed.bounce;
+  const b = feed.bounce; // rebote al tragar cada pescado
   groundShadow(fx, fy - 2, 24 * sx);
   if (!drawFrame(f, fx, fy, true, sx * (1 + b * 0.12), sy * (1 - b * 0.1))) {
     ctx.fillStyle = '#9ca3af'; ctx.fillRect(Math.round(fx - 25), Math.round(fy - 40), 50, 40);
@@ -849,19 +1098,16 @@ function drawMother(cx, cy) {
     g.addColorStop(0, `rgba(255,250,220,${0.75 * feed.flash})`); g.addColorStop(1, 'rgba(255,250,220,0)');
     ctx.fillStyle = g; ctx.fillRect(fx - 50, fy - 72, 100, 100);
   }
-  // pescados volando de Simba a mamá (en arco)
-  for (const q of feed.flying) {
+  for (const q of feed.flying) { // pescados volando de Simba a mamá (en arco)
     const u = clamp(q.t / q.dur, 0, 1);
     const x = lerp(q.x0, q.x1, u), y = lerp(q.y0, q.y1, u) - Math.sin(u * Math.PI) * 42;
     drawFish({ x: x - 8, y: y - 7, t: 0, taken: false }, cx, cy);
   }
-  // contador de pescados entregados sobre mamá
-  if (state === 'win' && feed.phase !== 'walk' && fishCount > 0) {
+  if (state === 'win' && feed.phase !== 'walk' && feed.bank > 0) { // contador sobre mamá
     drawFish({ x: fx - 30 + cx, y: fy - 78 + cy, t: 0, taken: false }, cx, cy);
-    text(feed.fed + '/' + fishes.length, fx - 6, fy - 70, 9, '#ffd23f', 'left');
+    text(feed.fed + '/' + feed.total, fx - 6, fy - 70, 9, '#ffd23f', 'left');
   }
-  // Corazoncito flotando sobre mamá como indicador de meta
-  if (state === 'play') drawHeart(Math.round(fx), Math.round(fy - 62 + Math.sin(timeT * 3) * 3), 1.6, '#ff6b9a');
+  if (state === 'play' && bossCleared()) drawHeart(Math.round(fx), Math.round(fy - 62 + Math.sin(timeT * 3) * 3), 1.6, '#ff6b9a');
 }
 
 function drawParticles(cx, cy) {
@@ -883,19 +1129,35 @@ function text(t, x, y, size, color = '#fff', align = 'center') {
   ctx.fillText(t, x + 2, y + 2);
   ctx.fillStyle = color; ctx.fillText(t, x, y);
 }
+// Parte un texto en líneas que caben en `maxW` píxeles (con la fuente ya fijada)
+function wrapText(str, size, maxW) {
+  ctx.font = `bold ${size}px "Press Start 2P", monospace`;
+  const words = str.split(' '), lines = [];
+  let cur = '';
+  for (const w of words) {
+    const test = cur ? cur + ' ' + w : w;
+    if (ctx.measureText(test).width > maxW && cur) { lines.push(cur); cur = w; } else cur = test;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
 
 function drawHUD() {
-  for (let i = 0; i < 3; i++) drawHeart(18 + i * 22, 12, 1.6, i < hearts ? '#ff4d6d' : '#4b4b5a');
-  // pez del HUD
+  for (let i = 0; i < 3; i++) drawHeart(18 + i * 22, 12, 1.6, i < hearts ? '#ff4d6d' : '#4b4b5a'); // salud
+  drawLifeIcon(96, 18, 22);                                                                     // vidas
+  text('x' + SAVE.lives, 110, 19, 10, '#ffffff', 'left');
   drawFish({ x: VW - 120 - 8, y: 14 - 7, t: 0, taken: false }, 0, 0);
-  text('x' + fishCount + '/' + fishes.length, VW - 104, 15, 10, '#ffd23f', 'left');
+  text('x' + fishCount + '/' + levelTotalFish(), VW - 104, 15, 10, '#ffd23f', 'left');
   const m = Math.floor(timeT / 60), s = Math.floor(timeT % 60);
-  text(m + ':' + String(s).padStart(2, '0'), VW / 2, 15, 10);
-  // Barra de progreso hacia mamá
-  const prog = clamp(player.x / mother.x, 0, 1);
-  ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(VW / 2 - 60, 28, 120, 5);
-  ctx.fillStyle = '#ff6b9a'; ctx.fillRect(VW / 2 - 60, 28, 120 * prog, 5);
-  if (msgT > 0) { ctx.globalAlpha = Math.min(1, msgT * 2); text(msg, VW / 2, 70, 12, '#fff3b0'); ctx.globalAlpha = 1; }
+  text(LV.id + '   ' + m + ':' + String(s).padStart(2, '0'), VW / 2, 15, 10);
+  if (bossBarVisible()) drawBossBar();
+  else if (!AR.isRoom) { // barra de progreso hacia la meta
+    const goal = MAIN.kitten ? MAIN.kitten.x : mother ? mother.x : COLS * TS;
+    const prog = clamp(player.x / goal, 0, 1);
+    ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(VW / 2 - 60, 28, 120, 5);
+    ctx.fillStyle = '#ff6b9a'; ctx.fillRect(VW / 2 - 60, 28, 120 * prog, 5);
+  }
+  if (msgT > 0) { ctx.globalAlpha = Math.min(1, msgT * 2); text(msg, VW / 2, 70, 11, '#fff3b0'); ctx.globalAlpha = 1; }
 }
 
 function overlay(alpha) { ctx.fillStyle = `rgba(10,10,30,${alpha})`; ctx.fillRect(0, 0, VW, VH); }
@@ -910,47 +1172,35 @@ function drawStar(x, y, r, filled) {
   ctx.lineWidth = 3; ctx.strokeStyle = '#1b1b2f'; ctx.stroke();
   ctx.fillStyle = filled ? '#ffd23f' : '#4b4b6a'; ctx.fill();
 }
-// Resultados: panel arriba para que mamá (abajo) se siga viendo bien alimentada
-function drawResults(hint2) {
-  const k = clamp((feed.doneT - 0.6) * 3, 0, 1); // entrada animada
-  const ratio = feed.fed / fishes.length;
-  const pw = 440, ph = 182, px = VW / 2 - pw / 2, py = 18 - (1 - k) * 40;
-  ctx.globalAlpha = k;
-  panel(px, py, pw, ph);
-  text(t('win'), VW / 2, py + 24, 16, '#ffb3d1');
-  const msgKey = ratio >= 1 ? 'res_full' : ratio >= 0.34 ? 'res_happy' : 'res_hungry';
-  text(t(msgKey), VW / 2, py + 50, 9, ratio >= 1 ? '#7cf2c4' : '#fff3b0');
-  // estrellas: llegar = 1 · la mitad de los pescados = 2 · todos = 3
-  const stars = 1 + (ratio >= 0.5 ? 1 : 0) + (ratio >= 1 ? 1 : 0);
-  for (let i = 0; i < 3; i++) {
-    const pop = i < stars ? 1 + Math.max(0, Math.sin(clamp(feed.doneT * 4 - 3 - i, 0, Math.PI))) * 0.25 : 1;
-    drawStar(VW / 2 + (i - 1) * 46, py + 84, 15 * pop, i < stars);
-  }
-  const m = Math.floor(timeT / 60), s = Math.floor(timeT % 60);
-  text(t('delivered') + '  ' + feed.fed + ' / ' + fishes.length, VW / 2, py + 118, 10, '#ffd23f');
-  text(t('time') + '  ' + m + ':' + String(s).padStart(2, '0') + '     ' + t('lives') + '  ' + hearts, VW / 2, py + 140, 9, '#ffffff');
-  if (feed.doneT > 1.2 && Math.floor(feed.doneT * 2) % 2 === 0) text(startHint() + ' ' + t('again') + hint2, VW / 2, py + 164, 8, '#fff3b0');
-  ctx.globalAlpha = 1;
-}
 
 function drawGameScene() {
-  const shaking = shake > 0 && state === 'play';
+  const shaking = shake > 0 && (state === 'play' || state === 'dying');
   const sx = shaking ? (Math.random() - 0.5) * shake : 0;
   const sy = shaking ? (Math.random() - 0.5) * shake : 0;
   const cx = Math.round(camX + sx), cy = Math.round(camY + sy);
-  drawBackground(cx, G * TS - cy);
-  drawAbyss(cy);
+  if (AR.isRoom) drawRoomBackground(cx);
+  else { drawBackground(cx, G * TS - cy); drawAbyss(cy); }
   drawTiles(cx, cy);
+  if (AR.isRoom) { ctx.fillStyle = AR.style === 'tree' ? 'rgba(60,30,10,0.4)' : 'rgba(20,16,60,0.45)'; ctx.fillRect(0, 0, VW, VH); } // penumbra de la sala
   drawCheckpoint(cx, cy);
-  for (const f of fishes) drawFish(f, cx, cy);
+  for (const d of AR.doorObjs || []) drawDoor(d, cx, cy);
+  drawExitDoor(cx, cy);
+  for (const f of AR.fishes) drawFish(f, cx, cy);
+  for (const o of AR.oneups) drawOneup(o, cx, cy);
+  drawKitten(cx, cy);
   drawMother(cx, cy);
-  for (const e of enemies) drawEnemy(e, cx, cy);
+  if (!AR.isRoom) drawBoss(cx, cy);
+  for (const e of AR.enemies) drawEnemy(e, cx, cy);
   drawPlayer(cx, cy);
   drawParticles(cx, cy);
+  drawDoorPrompt(cx, cy);
   drawHUD();
+  if (state === 'talk') drawTalk(cx, cy);
+  if (state === 'door') overlay(clamp(1 - Math.abs(doorT - 0.3) / 0.3, 0, 1)); // fundido a negro
 }
 
 function render(dt) {
+  ctx.setTransform(RS, 0, 0, RS, 0, 0); // todo se dibuja en coordenadas lógicas de 640x360
   ctx.imageSmoothingEnabled = false;
   hitRects = [];
   // Menú principal (y ajustes abiertos desde él): escena animada propia
@@ -959,17 +1209,14 @@ function render(dt) {
     if (state === 'menu') drawMainMenu(); else { overlay(0.25); drawSettings(); }
     return;
   }
+  if (state === 'map' || (state === 'settings' && settingsFrom === 'map')) { drawMap(); if (state === 'settings') { overlay(0.5); drawSettings(); } return; }
+  if (state === 'intro') { drawIntro(); return; }
+  if (state === 'gameover') { drawGameOver(); return; }
   drawGameScene();
   if (state === 'pause') drawPauseMenu();
   if (state === 'settings') { overlay(0.55); drawSettings(); }
-  const hint2 = IS_TOUCH ? '' : '   ·   ' + t('esc_menu');
-  if (state === 'gameover') {
-    overlay(Math.min(0.6, deadT));
-    text(t('ohno'), VW / 2, VH / 2 - 30, 28, '#ff6b6b');
-    text(t('nolives'), VW / 2, VH / 2 + 5, 11);
-    if (deadT > 0.8 && Math.floor(deadT * 2) % 2 === 0) text(startHint() + ' ' + t('retry') + hint2, VW / 2, VH / 2 + 45, 9, '#fff3b0');
-  }
-  if (state === 'win' && feed.phase === 'done' && feed.doneT > 0.6) drawResults(hint2);
+  if (state === 'clear') drawLevelClear();
+  if (state === 'win' && feed.phase === 'done' && feed.doneT > 0.6) drawResults();
 }
 
 // ---------------- Loop ----------------
@@ -990,7 +1237,6 @@ function frame(now) {
   render(blocked ? 0 : dt);
   requestAnimationFrame(frame);
 }
-buildLevel();
-startGame(); state = 'menu'; // prepara el nivel detrás del menú
+startLevel(ALL_LEVELS[0].id); state = 'menu'; // prepara un nivel detrás del menú
 applySettings();
 requestAnimationFrame(frame);
