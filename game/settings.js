@@ -26,6 +26,8 @@ function saveSettings() {
 const I18N = {
   es: {
     subtitle: 'el camino a casa',
+    share: 'COMPARTIR', share_copied: '¡Link copiado! Pégalo donde quieras',
+    share_text: '¡Ayuda a Simba a volver a casa con su mamá! Un juego de plataformas pixel art en 4 estaciones 🐱',
     play: 'JUGAR', settings: 'CONFIGURACIÓN', back: 'VOLVER',
     brightness: 'Brillo', music: 'Música', sfx: 'Efectos',
     display: 'Resolución', fullscreen: 'Pantalla completa', lang: 'Idioma',
@@ -77,6 +79,8 @@ const I18N = {
   },
   en: {
     subtitle: 'the way home',
+    share: 'SHARE', share_copied: 'Link copied! Paste it anywhere',
+    share_text: 'Help Simba find his way home to his mom! A pixel-art platformer through 4 seasons 🐱',
     play: 'PLAY', settings: 'SETTINGS', back: 'BACK',
     brightness: 'Brightness', music: 'Music', sfx: 'Sound FX',
     display: 'Resolution', fullscreen: 'Fullscreen', lang: 'Language',

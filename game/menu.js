@@ -113,12 +113,13 @@ function toCanvas(clientX, clientY) {
 function hitAt(p) { for (let i = hitRects.length - 1; i >= 0; i--) { const h = hitRects[i]; if (p.x >= h.x && p.x <= h.x + h.w && p.y >= h.y && p.y <= h.y + h.h) return h; } return null; }
 function menuHover(clientX, clientY) {
   const h = hitAt(toCanvas(clientX, clientY));
-  if (h && h.idx !== menuSel) { menuSel = h.idx; SFX.move(); }
+  if (h && h.idx !== undefined && h.idx !== menuSel) { menuSel = h.idx; SFX.move(); }
 }
 function menuPointer(clientX, clientY) {
   const p = toCanvas(clientX, clientY);
   const h = hitAt(p);
   if (!h) return;
+  if (h.zone === 'share') { if (performance.now() - shareTouchT > 700) shareGame(); return; } // con el dedo: ver touchend
   const items = currentItems();
   const it = items[h.idx];
   menuSel = h.idx;
@@ -245,6 +246,60 @@ function drawMainMenu() {
   items.forEach((it, i) => button(VW / 2 - w / 2, 158 + i * 50, w, h, it.label, i === menuSel, i));
   text(IS_TOUCH ? t('menu_hint_touch') : t('menu_hint_keys'), VW / 2, 346, 8, '#e5e7eb');
   drawPlayerStats();
+  drawShareButton();
+}
+
+// ---------- Compartir el juego ----------
+// En el móvil abre el menú nativo para compartir (WhatsApp, Telegram...); en PC copia el link.
+const SHARE_URL = 'https://simba.thesender.net/';
+let shareMsgT = 0, shareMsg = '';
+async function shareGame() {
+  SFX.select();
+  const data = { title: 'Simba: el camino a casa', text: t('share_text'), url: SHARE_URL };
+  try {
+    if (navigator.share) { await navigator.share(data); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; } // el jugador cerró el menú de compartir
+  try { await navigator.clipboard.writeText(data.text + ' ' + SHARE_URL); shareMsg = t('share_copied'); }
+  catch (e) { shareMsg = SHARE_URL; } // sin portapapeles: al menos se muestra el link
+  shareMsgT = 2.5;
+}
+function drawShareButton() {
+  const w = 112, h = 24, x = VW - w - 14, y = VH - h - 12;
+  const hover = hoverShare;
+  pixRect(x - 2, y - 2, w + 4, h + 4, '#1b1b2f');
+  pixRect(x, y, w, h, hover ? '#ff8fb8' : 'rgba(58,61,122,0.95)');
+  ctx.fillStyle = hover ? '#ffd1e3' : '#5a5fa8'; ctx.fillRect(x + 3, y + 2, w - 6, 2);
+  // icono: tres nodos unidos
+  const ix = x + 16, iy = y + h / 2;
+  ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(ix + 4, iy - 5); ctx.lineTo(ix - 4, iy); ctx.lineTo(ix + 4, iy + 5); ctx.stroke();
+  ctx.fillStyle = '#ffffff';
+  for (const [dx, dy] of [[4, -5], [-4, 0], [4, 5]]) { ctx.beginPath(); ctx.arc(ix + dx, iy + dy, 2.6, 0, Math.PI * 2); ctx.fill(); }
+  text(t('share'), x + 30, iy + 1, 8, '#ffffff', 'left');
+  hitRects.push({ x: x - 3, y: y - 3, w: w + 6, h: h + 6, zone: 'share' });
+  if (shareMsgT > 0) {
+    shareMsgT = Math.max(0, shareMsgT - 1 / 60);
+    ctx.globalAlpha = Math.min(1, shareMsgT * 2);
+    ctx.font = 'bold 7px "Press Start 2P", monospace';
+    const mw = ctx.measureText(shareMsg).width + 20;
+    pixRect(VW - mw - 14, y - 30, mw, 20, '#1b1b2f'); pixRect(VW - mw - 12, y - 28, mw - 4, 16, 'rgba(36,38,82,0.95)');
+    text(shareMsg, VW - mw / 2 - 14, y - 19, 7, '#7cf2c4');
+    ctx.globalAlpha = 1;
+  }
+}
+let hoverShare = false, shareTouchT = -1e9;
+{ // (este archivo carga antes que game.js: se toma el canvas por su id)
+  const cv = document.getElementById('game');
+  cv.addEventListener('mousemove', e => {
+    const h = state === 'menu' && hitAt(toCanvas(e.clientX, e.clientY));
+    hoverShare = !!(h && h.zone === 'share');
+  });
+  // en el móvil, el menú nativo de compartir solo se puede abrir al SOLTAR el dedo
+  cv.addEventListener('touchstart', () => { shareTouchT = performance.now(); }, { capture: true });
+  cv.addEventListener('touchend', e => {
+    const tc = e.changedTouches[0], h = state === 'menu' && hitAt(toCanvas(tc.clientX, tc.clientY));
+    if (h && h.zone === 'share') shareGame();
+  });
 }
 
 function drawSettings() {

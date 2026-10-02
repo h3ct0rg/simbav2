@@ -46,6 +46,7 @@ Los niveles están en `game/levels.js` como dibujos de texto de 12 filas (`#` ti
 - Estrellas por nivel y pantallas de transición ("MUNDO 1-2", con las vidas que te quedan).
 - Física fluida: *coyote time*, *jump buffer*, salto variable y simulación en subpasos.
 - Menú principal animado, pausa y configuración de brillo, música, efectos, resolución, pantalla completa e idioma (ES/EN).
+- **Compartir:** botón COMPARTIR abajo a la derecha del menú principal (en el móvil abre el menú nativo para compartir; en PC copia el link). El link muestra una vista previa con imagen y descripción (etiquetas Open Graph en `game/index.html`, imagen `game/share.jpg` de 1200×630).
 - Música chiptune y efectos con Web Audio. Controles táctiles y aviso para girar el móvil.
 
 ## Estadísticas de jugadores (Firebase)
