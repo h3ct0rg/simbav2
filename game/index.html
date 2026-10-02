@@ -83,6 +83,12 @@
   }
 
   /* ---------- Aviso: girar el móvil ---------- */
+  /* Botón COMPARTIR: se dibuja en el canvas, pero el toque lo recibe este botón HTML invisible
+     colocado encima. Así el móvil reconoce el toque como gesto del usuario y deja abrir su menú
+     de compartir (el canvas cancela los toques para los controles del juego). */
+  #share-btn { position: fixed; z-index: 3; display: none; margin: 0; padding: 0; border: 0; background: transparent;
+    cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  .in-menu #share-btn { display: block; }
   #rotate {
     position: fixed; inset: 0; z-index: 5; display: none;
     flex-direction: column; align-items: center; justify-content: center; gap: 28px;
@@ -105,6 +111,7 @@
 </head>
 <body>
 <canvas id="game"></canvas>
+<button id="share-btn" type="button" aria-label="Compartir"></button>
 
 <button id="t-jump" class="ctl" aria-label="Saltar"><span class="arrow">⤒</span><span class="label">SALTAR</span></button>
 <div id="joy" class="ctl" aria-label="Joystick"><div id="knob"></div></div>
@@ -134,16 +141,16 @@
 </div>
 
 <!-- ?v=N: súbelo al publicar cambios para que el navegador no use versiones en caché -->
-<script src="../sprites/manifest.js?v=33"></script>
-<script src="settings.js?v=33"></script>
-<script src="save.js?v=33"></script>
-<script src="stats.js?v=33"></script>
-<script src="levels.js?v=33"></script>
-<script src="menu.js?v=33"></script>
-<script src="screens.js?v=33"></script>
-<script src="boss.js?v=33"></script>
-<script src="winter.js?v=33"></script>
-<script src="ending.js?v=33"></script>
-<script src="game.js?v=33"></script>
+<script src="../sprites/manifest.js?v=34"></script>
+<script src="settings.js?v=34"></script>
+<script src="save.js?v=34"></script>
+<script src="stats.js?v=34"></script>
+<script src="levels.js?v=34"></script>
+<script src="menu.js?v=34"></script>
+<script src="screens.js?v=34"></script>
+<script src="boss.js?v=34"></script>
+<script src="winter.js?v=34"></script>
+<script src="ending.js?v=34"></script>
+<script src="game.js?v=34"></script>
 </body>
 </html>

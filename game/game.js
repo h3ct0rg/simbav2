@@ -1888,6 +1888,7 @@ function frame(now) {
   }
   // los controles táctiles solo se muestran durante la partida
   document.documentElement.classList.toggle('playing', state === 'play');
+  document.documentElement.classList.toggle('in-menu', state === 'menu' && !portraitBlocked());
   render(blocked ? 0 : dt);
   requestAnimationFrame(frame);
 }

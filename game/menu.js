@@ -119,7 +119,6 @@ function menuPointer(clientX, clientY) {
   const p = toCanvas(clientX, clientY);
   const h = hitAt(p);
   if (!h) return;
-  if (h.zone === 'share') { if (performance.now() - shareTouchT > 700) shareGame(); return; } // con el dedo: ver touchend
   const items = currentItems();
   const it = items[h.idx];
   menuSel = h.idx;
@@ -252,16 +251,48 @@ function drawMainMenu() {
 // ---------- Compartir el juego ----------
 // En el móvil abre el menú nativo para compartir (WhatsApp, Telegram...); en PC copia el link.
 const SHARE_URL = 'https://simba.thesender.net/';
-let shareMsgT = 0, shareMsg = '';
+let shareMsgT = 0, shareMsg = '', hoverShare = false;
+function copyText(str) { // respaldo si no hay portapapeles moderno (navegadores viejos o sin permiso)
+  const ta = document.createElement('textarea');
+  ta.value = str; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+  document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, str.length);
+  let okCopy = false;
+  try { okCopy = document.execCommand('copy'); } catch (e) { }
+  ta.remove();
+  return okCopy;
+}
 async function shareGame() {
-  SFX.select();
+  unlockAudio(); SFX.select();
   const data = { title: 'Simba: el camino a casa', text: t('share_text'), url: SHARE_URL };
-  try {
-    if (navigator.share) { await navigator.share(data); return; }
-  } catch (e) { if (e && e.name === 'AbortError') return; } // el jugador cerró el menú de compartir
-  try { await navigator.clipboard.writeText(data.text + ' ' + SHARE_URL); shareMsg = t('share_copied'); }
-  catch (e) { shareMsg = SHARE_URL; } // sin portapapeles: al menos se muestra el link
+  if (navigator.share) {
+    try { await navigator.share(data); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; } // el jugador cerró el menú de compartir
+  }
+  const full = data.text + ' ' + SHARE_URL;
+  let copied = false;
+  try { if (navigator.clipboard) { await navigator.clipboard.writeText(full); copied = true; } } catch (e) { }
+  if (!copied) copied = copyText(full);
+  shareMsg = copied ? t('share_copied') : SHARE_URL; // sin portapapeles: al menos se muestra el link
   shareMsgT = 2.5;
+}
+const shareBtn = document.getElementById('share-btn');
+if (shareBtn) {
+  shareBtn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); shareGame(); });
+  shareBtn.addEventListener('mouseenter', () => { hoverShare = true; });
+  shareBtn.addEventListener('mouseleave', () => { hoverShare = false; });
+  // que el toque no llegue al canvas (no debe activar otras opciones del menú)
+  for (const ev of ['touchstart', 'mousedown']) shareBtn.addEventListener(ev, e => e.stopPropagation(), { passive: true });
+}
+let shareBtnBox = '';
+function placeShareButton(x, y, w, h) { // coloca el botón HTML justo encima del dibujado
+  if (!shareBtn) return;
+  const r = canvas.getBoundingClientRect(), k = r.width / VW;
+  const box = `${Math.round(r.left + x * k)},${Math.round(r.top + y * k)},${Math.round(w * k)},${Math.round(h * k)}`;
+  if (box === shareBtnBox) return;
+  shareBtnBox = box;
+  const [l, tp, ww, hh] = box.split(',');
+  Object.assign(shareBtn.style, { left: l + 'px', top: tp + 'px', width: ww + 'px', height: hh + 'px' });
+  shareBtn.setAttribute('aria-label', t('share'));
 }
 function drawShareButton() {
   const w = 112, h = 24, x = VW - w - 14, y = VH - h - 12;
@@ -276,7 +307,7 @@ function drawShareButton() {
   ctx.fillStyle = '#ffffff';
   for (const [dx, dy] of [[4, -5], [-4, 0], [4, 5]]) { ctx.beginPath(); ctx.arc(ix + dx, iy + dy, 2.6, 0, Math.PI * 2); ctx.fill(); }
   text(t('share'), x + 30, iy + 1, 8, '#ffffff', 'left');
-  hitRects.push({ x: x - 3, y: y - 3, w: w + 6, h: h + 6, zone: 'share' });
+  placeShareButton(x - 4, y - 4, w + 8, h + 8);
   if (shareMsgT > 0) {
     shareMsgT = Math.max(0, shareMsgT - 1 / 60);
     ctx.globalAlpha = Math.min(1, shareMsgT * 2);
@@ -286,20 +317,6 @@ function drawShareButton() {
     text(shareMsg, VW - mw / 2 - 14, y - 19, 7, '#7cf2c4');
     ctx.globalAlpha = 1;
   }
-}
-let hoverShare = false, shareTouchT = -1e9;
-{ // (este archivo carga antes que game.js: se toma el canvas por su id)
-  const cv = document.getElementById('game');
-  cv.addEventListener('mousemove', e => {
-    const h = state === 'menu' && hitAt(toCanvas(e.clientX, e.clientY));
-    hoverShare = !!(h && h.zone === 'share');
-  });
-  // en el móvil, el menú nativo de compartir solo se puede abrir al SOLTAR el dedo
-  cv.addEventListener('touchstart', () => { shareTouchT = performance.now(); }, { capture: true });
-  cv.addEventListener('touchend', e => {
-    const tc = e.changedTouches[0], h = state === 'menu' && hitAt(toCanvas(tc.clientX, tc.clientY));
-    if (h && h.zone === 'share') shareGame();
-  });
 }
 
 function drawSettings() {
