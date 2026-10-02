@@ -10,6 +10,10 @@
 //    r  rata    d  perro    v  murciélago    c  cangrejo    b  abeja
 //    x  erizo de mar (pincha: NO se puede pisar, hay que saltarlo)
 //    j  hongo saltarín (lanza a Simba muy alto)
+//    l  hoja gigante flotante (3 casillas): se HUNDE si Simba se queda encima y vuelve a flotar
+//    g  géiser: dispara un chorro de agua cada pocos segundos que lanza a Simba hacia arriba
+//    q  ardilla (lanza bellotas)     w  jabalí (embiste al ver a Simba)
+//    C  punto de control (puede haber varios por nivel)
 //    h  tronco que se mueve de lado a lado (ocupa 3 casillas; recorre el hueco libre)
 //    u  tronco que sube y baja (3 casillas; sube hasta 3 filas)
 //    K  mensajero (meta de los niveles 1-3; gatito en primavera, tortuga en verano)
@@ -341,7 +345,165 @@ const WORLDS = [
       },
     ],
   },
-  { id: 3, season: 'autumn', name: { es: 'Otoño', en: 'Autumn' }, levels: [] },
+  {
+    id: 3, season: 'autumn', messenger: 'hedgehog', boss: 'squirrel',
+    name: { es: 'Otoño', en: 'Autumn' },
+    levels: [
+      {
+        id: '3-1', diff: 1.5,
+        name: { es: "Bosque dorado", en: "Golden Woods" },
+        say: { es: ["¡Hola, Simba! Soy Pincho. Tu mamá cruzó el bosque dorado.", "Ojo: las hojas del lago se hunden si te quedas quieto."], en: ["Hi, Simba! I'm Pincho. Your mom crossed the golden woods.", "Careful: lake leaves sink if you stand still."] },
+        map: [
+          "",
+          "",
+          "                                                oooo",
+          "                                                ====                                                                                 ooo",
+          "                                   v                                                                              v                  ===",
+          "                                                                                                                                                       q                                             ###",
+          "                                ooooooooo                              oooo                       q        ooooooooooooooo                            ===        ooooo                               ###",
+          "                                                                                                #####                                                                                                ###",
+          "  P  ooo      q         w                   C     g       q     w   q           1   w ooo w     #####                        C         g    q    w          q               w       q   ooo  w  K    ###",
+          "###############################  l   l    #############################    ###############################  l   l   l   l  ###################################### h   ##################################",
+          "###############################           #############################    ###############################                 ######################################     ##################################",
+          "###############################           #############################    ###############################                 ######################################     ##################################",
+        ],
+        rooms: {
+          '1': { style: 'cave', map: [
+              "########################################",
+              "#                                      #",
+              "#                                      #",
+              "#                                      #",
+              "#               v                      #",
+              "#                       v              #",
+              "#            ooo     ooo          +    #",
+              "#                               #####  #",
+              "# 0 ooo                       oo#####  #",
+              "############ l   l   l   l  ############",
+              "############                ############",
+              "############                ############",
+            ] },
+        },
+      },
+      {
+        id: '3-2', diff: 1.57,
+        name: { es: "El gran lago", en: "The Great Lake" },
+        say: { es: ["El viento de otoño sopla fuerte: mira cómo vuelan las hojas.", "Los géiseres lanzan agua cada pocos segundos. ¡Espera su chorro!"], en: ["The autumn wind blows hard: watch the leaves fly.", "Geysers shoot water every few seconds. Wait for the jet!"] },
+        map: [
+          "",
+          "                                                                                                                                               oooo",
+          "                                                                  oooo                                                                         ====",
+          "                                                  v               ====                                                                                                                                        v",
+          "                                 v                                                                   v                                                                                       v",
+          "                                                                                                                               q                                                                                                                       ###",
+          "                           ooooooooooo      ooooooooooooooo                                  ooooooooooooooooo                ===                      oooo                            ooooooooooo      ooooooooooooooo                                ###",
+          "                                                                                                                                                                                                                                                       ###",
+          "  P  ooow   q       w                   C                           g     w   q   q   1                          C      q           w     w      g              w   ooo w q    q                                              w       q   ooo  w  K    ###",
+          "#########################  l   l   l   ###  l   l   l   l    ##############################  h     l   l   l   ########################################    ##########################  l   l   l   ###  l   l   l   l   ##################################",
+          "#########################              ###                   ##############################                    ########################################    ##########################              ###                  ##################################",
+          "#########################              ###                   ##############################                    ########################################    ##########################              ###                  ##################################",
+        ],
+        rooms: {
+          '1': { style: 'cave', map: [
+              "############################################",
+              "#                                          #",
+              "#                                          #",
+              "#                     v                    #",
+              "#              v                           #",
+              "#                            v             #",
+              "#           ooo   ooo   ooo                #",
+              "#                                       +  #",
+              "# 0 ooo                               #### #",
+              "##########  h     l     h         ##########",
+              "##########                        ##########",
+              "##########                        ##########",
+            ] },
+        },
+      },
+      {
+        id: '3-3', diff: 1.64,
+        name: { es: "Cumbres del viento", en: "Windy Peaks" },
+        say: { es: ["Tu mamá está en el gran roble, pero Doña Bellota no deja pasar.", "Si se come su bellota dorada, ¡salta sobre ella para impedirlo!"], en: ["Your mom is at the great oak, but Do\u00f1a Bellota blocks the way.", "If she eats her golden acorn, jump on her to stop it!"] },
+        map: [
+          "",
+          "                                                                          oooo",
+          "                                                                          ====                                                                                            oooo",
+          "        ooo                                                                                                                       v                                       ====",
+          "        ===                                         v                                              q                          v",
+          "                        ooo q w      q                                                            ===                                                                                                                    ###",
+          "                     ####################  ooooooooooooooo                            oooo                            ooooooooooooooooooooo                                               oooo                           ###",
+          "                     ####################                                                                                                                                                                                ###",
+          "  P       g     q  g ####################                      C  1   w     g     q          ooo w    w  w    2  q                             C      w    w  q       q     g  w    q               w  qooo q   w   K    ###",
+          "#########################################  l   l   l   l     #########################    ##########################  h     l   l   l   l    #############################################    ##############################",
+          "#########################################                    #########################    ##########################                         #############################################    ##############################",
+          "#########################################                    #########################    ##########################                         #############################################    ##############################",
+        ],
+        rooms: {
+          '1': { style: 'cave', map: [
+              "########################################",
+              "#                                      #",
+              "#                                      #",
+              "#                    v                 #",
+              "#             v                        #",
+              "#                         v            #",
+              "#          ooo     ooo                 #",
+              "#                                  +   #",
+              "# 0 ooo                         o##### #",
+              "########## l   l   l   l      ##########",
+              "##########                    ##########",
+              "##########                    ##########",
+            ] },
+          '2': { style: 'tree', map: [
+              "####################",
+              "#         +        #",
+              "#        ===       #",
+              "#                  #",
+              "#                  #",
+              "#                  #",
+              "#                  #",
+              "#                  #",
+              "# 0    g ooo  ooo  #",
+              "####################",
+              "####################",
+              "####################",
+            ] },
+        },
+      },
+      {
+        id: '3-4', diff: 1.7,
+        name: { es: "El roble de Doña Bellota", en: "Do\u00f1a Bellota's Oak" },
+        map: [
+          "",
+          "",
+          "",
+          "                     ooo                                                              B",
+          "                     ===                                                         =======",
+          "                                                                                                                                                             ###",
+          "                             ooooooooooooooo                                                                                                                 ###",
+          "                                                                                                                                                             ###",
+          "  P  ooo  q       w    g                            w     1       C     [    g           g ]                                                          M      ###",
+          "###########################  l   l   l   l   ###################################################################################################################",
+          "###########################                  ###################################################################################################################",
+          "###########################                  ###################################################################################################################",
+        ],
+        rooms: {
+          '1': { style: 'tree', map: [
+              "####################",
+              "#                  #",
+              "#                  #",
+              "#          +       #",
+              "#         ==       #",
+              "#     oo           #",
+              "#     ==           #",
+              "#                  #",
+              "# 0           oooo #",
+              "####################",
+              "####################",
+              "####################",
+            ] },
+        },
+      },
+    ],
+  },
   { id: 4, season: 'winter', name: { es: 'Invierno', en: 'Winter' }, levels: [] },
 ];
 const LEVELS_PER_WORLD = 4;
@@ -357,7 +519,7 @@ function parseArea(rows, isRoom) {
   const cols = Math.max(...rows.map(r => r.length));
   const grid = Array.from({ length: LV_ROWS }, () => new Array(cols).fill(0));
   const a = {
-    isRoom, cols, rows: LV_ROWS, grid, spawn: null, fish: [], lifes: [], walkers: [], bats: [], urchins: [], mushrooms: [], movers: [],
+    isRoom, cols, rows: LV_ROWS, grid, spawn: null, fish: [], lifes: [], walkers: [], bats: [], urchins: [], mushrooms: [], movers: [], leaves: [], geysers: [], squirrels: [], checkpoints: [],
     doors: [], checkpoint: null, messenger: null, mother: null, boss: null, arena: null, exit: null,
   };
   let arenaL = null;
@@ -370,12 +532,15 @@ function parseArea(rows, isRoom) {
       else if (ch === 'P') a.spawn = { c, r };
       else if (ch === 'o') a.fish.push({ c, r });
       else if (ch === '+') a.lifes.push({ c, r });
-      else if (ch === 'r' || ch === 'd' || ch === 'c') a.walkers.push({ type: { r: 'rat', d: 'dog', c: 'crab' }[ch], c, r });
+      else if ('rdcw'.includes(ch)) a.walkers.push({ type: { r: 'rat', d: 'dog', c: 'crab', w: 'boar' }[ch], c, r });
       else if (ch === 'v' || ch === 'b') a.bats.push({ type: ch === 'v' ? 'bat' : 'bee', c, r });
       else if (ch === 'x') a.urchins.push({ c, r });
+      else if (ch === 'l') a.leaves.push({ c, r });
+      else if (ch === 'g') a.geysers.push({ c, r });
+      else if (ch === 'q') a.squirrels.push({ c, r });
       else if (ch === 'j') a.mushrooms.push({ c, r });
       else if (ch === 'h' || ch === 'u') a.movers.push({ axis: ch === 'h' ? 'x' : 'y', c, r });
-      else if (ch === 'C') a.checkpoint = { c, r };
+      else if (ch === 'C') { a.checkpoints.push({ c, r }); a.checkpoint = a.checkpoint || { c, r }; }
       else if (ch === 'K') a.messenger = { c, r };
       else if (ch === 'M') a.mother = { c, r };
       else if (ch === 'B') a.boss = { c, r };
@@ -385,9 +550,16 @@ function parseArea(rows, isRoom) {
       else if (ch >= '1' && ch <= '9') a.doors.push({ id: ch, c, r });
     }
   }
-  // fila del suelo más común: ancla el fondo y el abismo
+  // fila del suelo más común: ancla el fondo, el agua y el abismo. Se mide DESDE ABAJO
+  // (la cima de la columna de tierra que llega al fondo), así el techo de las salas no cuenta.
   const tops = {};
-  for (let c = 0; c < cols; c++) for (let r = 0; r < LV_ROWS; r++) if (grid[r][c] === T_SOLID) { tops[r] = (tops[r] || 0) + 1; break; }
+  for (let c = 0; c < cols; c++) {
+    if (grid[LV_ROWS - 1][c] !== T_SOLID) continue;
+    let r = LV_ROWS - 1;
+    while (r > 0 && grid[r - 1][c] === T_SOLID) r--;
+    if (r > 0) tops[r] = (tops[r] || 0) + 1;
+  }
+  if (!Object.keys(tops).length) tops[9] = 1;
   a.groundRow = +Object.entries(tops).sort((x, y) => y[1] - x[1])[0][0];
   return a;
 }

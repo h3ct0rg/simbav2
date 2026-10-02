@@ -173,6 +173,23 @@ window.SPRITES = {
    }
   }
  },
+ "boss_squirrel_eat": {
+  "anims": {
+   "eat": {
+    "fps": 6,
+    "frames": [
+     "boss_squirrel_eat/eat/0.png",
+     "boss_squirrel_eat/eat/1.png",
+     "boss_squirrel_eat/eat/2.png",
+     "boss_squirrel_eat/eat/3.png",
+     "boss_squirrel_eat/eat/4.png",
+     "boss_squirrel_eat/eat/5.png",
+     "boss_squirrel_eat/eat/6.png",
+     "boss_squirrel_eat/eat/7.png"
+    ]
+   }
+  }
+ },
  "bat": "bat/bat.png",
  "rat": "rat/rat.png",
  "mother_thin": [
@@ -193,6 +210,12 @@ window.SPRITES = {
  "turtle": "turtle/turtle.png",
  "mushroom": "mushroom/mushroom.png",
  "log": "log/log.png",
+ "bg_autumn": "bg_autumn/bg_autumn.png",
+ "squirrel": "squirrel/squirrel.png",
+ "boar": "boar/boar.png",
+ "hedgehog": "hedgehog/hedgehog.png",
+ "leaf_raft": "leaf_raft/leaf_raft.png",
+ "boss_squirrel": "boss_squirrel/boss_squirrel.png",
  "tiles": {
   "wang_13": "tiles/wang_13.png",
   "wang_10": "tiles/wang_10.png",
@@ -228,5 +251,23 @@ window.SPRITES = {
   "wang_14": "tiles_summer/wang_14.png",
   "wang_9": "tiles_summer/wang_9.png",
   "wang_7": "tiles_summer/wang_7.png"
+ },
+ "tiles_autumn": {
+  "wang_13": "tiles_autumn/wang_13.png",
+  "wang_10": "tiles_autumn/wang_10.png",
+  "wang_4": "tiles_autumn/wang_4.png",
+  "wang_12": "tiles_autumn/wang_12.png",
+  "wang_6": "tiles_autumn/wang_6.png",
+  "wang_8": "tiles_autumn/wang_8.png",
+  "wang_0": "tiles_autumn/wang_0.png",
+  "wang_1": "tiles_autumn/wang_1.png",
+  "wang_11": "tiles_autumn/wang_11.png",
+  "wang_3": "tiles_autumn/wang_3.png",
+  "wang_2": "tiles_autumn/wang_2.png",
+  "wang_5": "tiles_autumn/wang_5.png",
+  "wang_15": "tiles_autumn/wang_15.png",
+  "wang_14": "tiles_autumn/wang_14.png",
+  "wang_9": "tiles_autumn/wang_9.png",
+  "wang_7": "tiles_autumn/wang_7.png"
  }
 };

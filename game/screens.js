@@ -12,33 +12,54 @@ const SEASON = {
   autumn: { ground: '#d98a3f', dark: '#a85f26', tree: '#e8582c', trunk: '#6b3f1f', sky: '#ffd2a8' },
   winter: { ground: '#e9f4ff', dark: '#b9d3ea', tree: '#2f6f5a', trunk: '#5a3b24', sky: '#dfeaf7' },
 };
-const NODE_DY = [0, -34, -6, -46];
+// Posición de cada nivel dentro de su región (160 px de ancho): el camino serpentea
+// y el nivel 4 (mamá + jefe) queda arriba, sobre la colina.
+const NODE_LAYOUT = [[28, 300], [62, 244], [102, 290], [134, 214]];
 const mapNodePos = i => {
   const w = Math.floor(i / LEVELS_PER_WORLD), k = i % LEVELS_PER_WORLD;
-  return { x: w * 160 + 32 + k * 33, y: 262 + NODE_DY[k] };
+  return { x: w * 160 + NODE_LAYOUT[k][0], y: NODE_LAYOUT[k][1] };
 };
 const nodeLevel = i => {
   const w = WORLDS[Math.floor(i / LEVELS_PER_WORLD)];
   return w && w.levels[i % LEVELS_PER_WORLD];
 };
 const nodeUnlocked = i => !!nodeLevel(i) && i < SAVE.unlocked;
-const map = { sel: 0, simX: 0, simY: 0, t: 0, flakes: [] };
+const map = { sel: 0, simX: 0, simY: 0, t: 0, flakes: [], walk: null, pop: null, face: 1 };
 
-function openMap(sel) {
+// `from`: nivel desde el que llega Simba (al superar un nivel camina por el sendero hasta el siguiente)
+function openMap(sel, from) {
   if (sel === undefined) sel = SAVE.mapSel || 0;
   // si el nivel elegido no existe todavía (mundo próximamente), quedarse en el último jugable
   let s = clamp(sel, 0, WORLDS.length * LEVELS_PER_WORLD - 1);
   while (s > 0 && !nodeUnlocked(s)) s--;
-  map.sel = s; SAVE.mapSel = s; writeSave();
-  const p = mapNodePos(s); map.simX = p.x; map.simY = p.y;
+  map.sel = s; SAVE.mapSel = s; writeSave(true);
+  const start = from !== undefined && from !== s ? from : s;
+  const p = mapNodePos(start); map.simX = p.x; map.simY = p.y;
+  map.walk = start !== s ? { a: start, b: s, t: -0.35 } : null; // pequeña pausa antes de echar a andar
+  map.pop = null;
   state = 'map'; menuSel = 0;
 }
+// Punto del sendero entre el nivel i y el i+1 (misma curva que dibuja drawPath)
+function pathPoint(i, u) {
+  const a = mapNodePos(i), b = mapNodePos(i + 1), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2 - 14;
+  const v = 1 - u;
+  return { x: v * v * a.x + 2 * v * u * mx + u * u * b.x, y: v * v * a.y + 2 * v * u * my + u * u * b.y };
+}
+const WALK_SEG = 0.6; // segundos por tramo de sendero
+function finishMapWalk() {
+  const w = map.walk; if (!w) return;
+  const p = mapNodePos(w.b); map.simX = p.x; map.simY = p.y;
+  map.walk = null; map.pop = { idx: w.b, t: 0 };
+  SFX.check();
+}
 function mapMove(dir) {
+  if (map.walk) finishMapWalk();
   let s = map.sel + dir;
   if (s < 0 || !nodeUnlocked(s)) { SFX.backSnd(); return; }
-  map.sel = s; SAVE.mapSel = s; writeSave(); SFX.move();
+  map.sel = s; SAVE.mapSel = s; writeSave(true); SFX.move();
 }
 function mapPlay() {
+  if (map.walk) { finishMapWalk(); return; } // ENTER durante el paseo: lo salta
   const lv = nodeLevel(map.sel);
   if (!lv || !nodeUnlocked(map.sel)) return;
   SFX.select(); startLevel(lv.id);
@@ -47,27 +68,41 @@ function mapKey(code) {
   if (code === 'ArrowLeft' || code === 'KeyA') mapMove(-1);
   else if (code === 'ArrowRight' || code === 'KeyD') mapMove(1);
   else if (code === 'Enter' || code === 'Space') mapPlay();
-  else if (code === 'Escape' || code === 'Backspace') openMainMenu();
+  else if (code === 'Escape' || code === 'Backspace') { writeSave(true); openSlots(); }
 }
 function mapPointer(clientX, clientY) {
   const h = hitAt(toCanvas(clientX, clientY));
   if (!h) return;
   if (h.zone === 'play') return mapPlay();
-  if (h.zone === 'back') return openMainMenu();
+  if (h.zone === 'back') return openSlots();
   if (h.zone === 'node') {
     if (!nodeUnlocked(h.idx)) { SFX.backSnd(); return; }
-    if (h.idx === map.sel) mapPlay(); else { map.sel = h.idx; SAVE.mapSel = h.idx; writeSave(); SFX.move(); }
+    if (h.idx === map.sel) mapPlay(); else { map.sel = h.idx; SAVE.mapSel = h.idx; writeSave(true); SFX.move(); }
   }
 }
 function updateMap(dt) {
   map.t += dt;
-  const p = mapNodePos(map.sel);
-  map.simX = lerp(map.simX, p.x, Math.min(1, dt * 6));
-  map.simY = lerp(map.simY, p.y, Math.min(1, dt * 6));
+  if (map.walk) { // camina por el sendero, tramo a tramo, hasta el nivel nuevo
+    const w = map.walk, dir = Math.sign(w.b - w.a), n = Math.abs(w.b - w.a);
+    w.t += dt;
+    const prog = clamp(w.t / WALK_SEG, 0, n);
+    if (prog >= n) finishMapWalk();
+    else {
+      const k = Math.floor(prog), u = prog - k;
+      const i = dir > 0 ? w.a + k : w.a - k - 1, pt = pathPoint(i, dir > 0 ? u : 1 - u);
+      map.face = dir; map.simX = pt.x; map.simY = pt.y;
+    }
+  } else {
+    const p = mapNodePos(map.sel);
+    if (Math.abs(map.simX - p.x) > 0.5) map.face = Math.sign(p.x - map.simX);
+    map.simX = lerp(map.simX, p.x, Math.min(1, dt * 6));
+    map.simY = lerp(map.simY, p.y, Math.min(1, dt * 6));
+  }
+  if (map.pop) { map.pop.t += dt; if (map.pop.t > 1.2) map.pop = null; }
   // nieve en invierno / pétalos en primavera / hojas en otoño
   if (Math.random() < dt * 14) {
     const w = Math.floor(Math.random() * 4);
-    map.flakes.push({ x: w * 160 + Math.random() * 160, y: 110, vy: 18 + Math.random() * 18, vx: (Math.random() - 0.5) * 14, w, life: 6 });
+    map.flakes.push({ x: w * 160 + Math.random() * 160, y: MAP_TOP, vy: 18 + Math.random() * 18, vx: (Math.random() - 0.5) * 14, w, life: 6 });
   }
   for (const f of map.flakes) { f.x += f.vx * dt + Math.sin(map.t * 2 + f.y * 0.05) * 0.3; f.y += f.vy * dt; f.life -= dt; }
   map.flakes = map.flakes.filter(f => f.life > 0 && f.y < VH && WORLDS[f.w].season !== 'summer');
@@ -93,92 +128,167 @@ function drawTree(x, y, s, season, scale = 1) {
   ctx.restore();
 }
 
+// Región del mapa con el arte del fondo de su mundo (recortado alrededor de su motivo principal)
+const MAP_TOP = 108, MAP_BOT = 340;
+const REGION_ART = {
+  spring: { img: () => A.bg, focus: 0.5 },
+  summer: { img: () => A.bgSummer, focus: 0.68 },  // la cascada
+  autumn: { img: () => A.bgAutumn, focus: 0.52 },  // el sol sobre el lago
+};
+function drawWinterRegion(x0) { // el invierno aún no tiene fondo propio: montañas nevadas por código
+  const g = ctx.createLinearGradient(0, MAP_TOP, 0, MAP_BOT);
+  g.addColorStop(0, '#9cc6e8'); g.addColorStop(0.6, '#dcebf8'); g.addColorStop(1, '#f4f9ff');
+  ctx.fillStyle = g; ctx.fillRect(x0, MAP_TOP, 160, MAP_BOT - MAP_TOP);
+  const mount = (bx, by, w, h, c, cap) => {
+    ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(bx - w / 2, by); ctx.lineTo(bx, by - h); ctx.lineTo(bx + w / 2, by); ctx.fill();
+    ctx.fillStyle = cap; ctx.beginPath(); ctx.moveTo(bx - w * 0.16, by - h * 0.68); ctx.lineTo(bx, by - h); ctx.lineTo(bx + w * 0.16, by - h * 0.68);
+    ctx.lineTo(bx + w * 0.07, by - h * 0.6); ctx.lineTo(bx, by - h * 0.7); ctx.lineTo(bx - w * 0.07, by - h * 0.6); ctx.fill();
+  };
+  mount(x0 + 40, 250, 120, 110, '#8fa8c8', '#ffffff'); mount(x0 + 120, 250, 130, 130, '#7d98bd', '#ffffff');
+  mount(x0 + 80, 262, 110, 80, '#a9bfdc', '#ffffff');
+  ctx.fillStyle = '#f7fbff'; ctx.beginPath(); ctx.moveTo(x0, MAP_BOT);
+  for (let x = 0; x <= 160; x += 8) ctx.lineTo(x0 + x, 258 - Math.sin((x + 40) / 24) * 8);
+  ctx.lineTo(x0 + 160, MAP_BOT); ctx.fill();
+  ctx.fillStyle = '#d6e6f5'; for (let i = 0; i < 6; i++) ctx.fillRect(x0 + 10 + i * 26, 300 + (i % 2) * 14, 14, 3);
+  [[14, 290], [148, 270], [80, 332]].forEach(([dx, dy]) => drawTree(x0 + dx, dy, SEASON.winter, 'winter', 0.9));
+}
+function drawRegion(w, wi) {
+  const x0 = wi * 160, art = REGION_ART[w.season];
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x0, MAP_TOP, 160, MAP_BOT - MAP_TOP); ctx.clip();
+  const im = art && art.img();
+  if (ok(im)) {
+    const sc = (MAP_BOT - MAP_TOP) / im.naturalHeight, iw = im.naturalWidth * sc;
+    ctx.drawImage(im, Math.round(x0 + 80 - art.focus * iw), MAP_TOP, Math.ceil(iw), MAP_BOT - MAP_TOP);
+    if (w.season === 'summer' && SEASON_CFG.summer.waterfall) drawWaterfall(SEASON_CFG.summer.waterfall, Math.round(x0 + 80 - art.focus * iw), MAP_TOP, sc, Math.ceil(iw), false);
+  } else if (w.season === 'winter') drawWinterRegion(x0);
+  else { ctx.fillStyle = SEASON[w.season].ground; ctx.fillRect(x0, MAP_TOP, 160, MAP_BOT - MAP_TOP); }
+  // bruma suave abajo: da contraste al camino y a los niveles
+  const g = ctx.createLinearGradient(0, MAP_TOP + 90, 0, MAP_BOT);
+  g.addColorStop(0, 'rgba(20,20,40,0)'); g.addColorStop(1, 'rgba(20,20,40,0.28)');
+  ctx.fillStyle = g; ctx.fillRect(x0, MAP_TOP, 160, MAP_BOT - MAP_TOP);
+  ctx.restore();
+}
+// Banderín con el nombre de la estación (texto siempre sobre fondo oscuro: se lee en cualquier región)
+function drawBanner(cx, y, label, color, active) {
+  ctx.font = 'bold 8px "Press Start 2P", monospace';
+  const w = Math.max(70, ctx.measureText(label).width + 24), x = cx - w / 2;
+  ctx.fillStyle = '#1b1b2f';
+  ctx.beginPath(); ctx.moveTo(x - 8, y - 2); ctx.lineTo(x, y + 6); ctx.lineTo(x - 8, y + 14); ctx.lineTo(x + 4, y + 14); ctx.lineTo(x + 4, y - 2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(x + w + 8, y - 2); ctx.lineTo(x + w, y + 6); ctx.lineTo(x + w + 8, y + 14); ctx.lineTo(x + w - 4, y + 14); ctx.lineTo(x + w - 4, y - 2); ctx.fill();
+  pixRect(x - 2, y - 4, w + 4, 20, '#1b1b2f');
+  pixRect(x, y - 2, w, 16, active ? color : '#3a3d7a');
+  ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillRect(x + 3, y - 1, w - 6, 2);
+  text(label, cx, y + 7, 8, '#ffffff');
+}
+function drawPill(cx, cy, w, h) { pixRect(cx - w / 2 - 1, cy - h / 2 - 1, w + 2, h + 2, '#1b1b2f'); pixRect(cx - w / 2, cy - h / 2, w, h, 'rgba(36,38,82,0.92)'); }
+
+// Sendero de tierra entre los niveles (más claro en lo ya recorrido)
+function drawPath(N) {
+  const seg = (i, width, style, dash) => {
+    const a = mapNodePos(i), b = mapNodePos(i + 1), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2 - 14;
+    ctx.strokeStyle = style; ctx.lineWidth = width; ctx.setLineDash(dash || []);
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.quadraticCurveTo(mx, my, b.x, b.y); ctx.stroke();
+  };
+  ctx.lineCap = 'round';
+  for (let i = 0; i < N - 1; i++) seg(i, 11, '#2a1d14');
+  for (let i = 0; i < N - 1; i++) seg(i, 7, i < SAVE.unlocked - 1 ? '#d8b072' : '#7d7488');
+  for (let i = 0; i < N - 1; i++) if (i < SAVE.unlocked - 1) seg(i, 2, 'rgba(255,240,200,0.7)', [3, 6]);
+  ctx.setLineDash([]); ctx.lineCap = 'butt';
+}
+
+// Medallón de un nivel
+function drawNode(i, p) {
+  const lv = nodeLevel(i), unlocked = nodeUnlocked(i), isBoss = i % LEVELS_PER_WORLD === 3;
+  const st = lv ? levelStats(lv.id) : null, done = st && st.done, sel = i === map.sel;
+  const r = isBoss ? 14 : 11, y = p.y - (sel ? Math.abs(Math.sin(map.t * 4)) * 2 : 0);
+  const season = SEASON[WORLDS[Math.floor(i / LEVELS_PER_WORLD)].season];
+  ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(p.x, p.y + r - 1, r, 4, 0, 0, Math.PI * 2); ctx.fill(); // sombra
+  if (sel) { // anillo pulsante del nivel elegido
+    ctx.strokeStyle = `rgba(255,255,255,${0.5 + Math.sin(map.t * 6) * 0.3})`; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(p.x, y, r + 6, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.fillStyle = '#1b1b2f'; ctx.beginPath(); ctx.arc(p.x, y, r + 3, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = !unlocked ? '#5c5f74' : done ? '#ffd23f' : '#e9edf7'; // aro: oro si está completado
+  ctx.beginPath(); ctx.arc(p.x, y, r + 1, 0, Math.PI * 2); ctx.fill();
+  const g = ctx.createRadialGradient(p.x - r * 0.35, y - r * 0.4, 1, p.x, y, r);
+  if (!unlocked) { g.addColorStop(0, '#a3a6b8'); g.addColorStop(1, '#5d6075'); }
+  else { g.addColorStop(0, '#ffffff'); g.addColorStop(1, sel ? '#ff8fb8' : season.ground); }
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, y, r - 1, 0, Math.PI * 2); ctx.fill();
+  if (!unlocked) { // candado
+    ctx.fillStyle = '#2f3142'; ctx.fillRect(p.x - 5, y - 1, 10, 7);
+    ctx.strokeStyle = '#2f3142'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, y - 1, 3.5, Math.PI, 0); ctx.stroke();
+  } else if (isBoss) drawHeart(p.x, y - 6, 1.35, done ? '#ff6b9a' : '#ff9ec0'); // mamá espera aquí
+  else {
+    ctx.font = 'bold 9px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#1b1b2f'; ctx.fillText(String(i % LEVELS_PER_WORLD + 1), p.x + 1, y + 1);
+  }
+  if (done) { // estrellas sobre una plaquita oscura
+    drawPill(p.x, p.y + r + 10, 32, 11);
+    for (let k = 0; k < 3; k++) drawStar(p.x - 9 + k * 9, p.y + r + 10, 3.5, k < st.stars);
+  }
+  hitRects.push({ x: p.x - 16, y: p.y - 16, w: 32, h: 32, idx: i, zone: 'node' });
+}
+
 function drawMap() {
-  // cielo
-  const sky = ctx.createLinearGradient(0, 0, 0, 200);
-  sky.addColorStop(0, '#6ec6ff'); sky.addColorStop(1, '#d6f0ff');
+  const sky = ctx.createLinearGradient(0, 0, 0, MAP_TOP);
+  sky.addColorStop(0, '#2b2d5c'); sky.addColorStop(1, '#4b4f8f');
   ctx.fillStyle = sky; ctx.fillRect(0, 0, VW, VH);
-  // regiones de cada estación
-  WORLDS.forEach((w, wi) => {
-    const s = SEASON[w.season], x0 = wi * 160;
-    ctx.fillStyle = s.sky; ctx.globalAlpha = 0.45; ctx.fillRect(x0, 120, 160, 80); ctx.globalAlpha = 1;
-    // colinas de la región
-    ctx.fillStyle = s.dark;
-    ctx.beginPath(); ctx.moveTo(x0, VH);
-    for (let x = 0; x <= 160; x += 8) ctx.lineTo(x0 + x, 196 - Math.sin((x + wi * 50) / 26) * 10);
-    ctx.lineTo(x0 + 160, VH); ctx.fill();
-    ctx.fillStyle = s.ground; ctx.fillRect(x0, 206, 160, VH - 206);
-    ctx.fillStyle = s.dark; ctx.fillRect(x0, 206, 160, 3);
-    // decoración
-    [[12, 244], [150, 238], [62, 326], [124, 334]].forEach(([dx, dy], i) => drawTree(x0 + dx, dy, s, w.season, i === 2 ? 0.8 : 1));
-    if (w.season === 'summer') { // sol
-      ctx.fillStyle = '#fff3a0'; ctx.beginPath(); ctx.arc(x0 + 128, 150, 15, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = '#ffd23f'; ctx.lineWidth = 3;
-      for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4 + map.t * 0.5; ctx.beginPath(); ctx.moveTo(x0 + 128 + Math.cos(a) * 20, 150 + Math.sin(a) * 20); ctx.lineTo(x0 + 128 + Math.cos(a) * 26, 150 + Math.sin(a) * 26); ctx.stroke(); }
-    }
-    if (w.season === 'spring') for (let i = 0; i < 14; i++) { ctx.fillStyle = i % 2 ? '#ff8fb8' : '#fff3b0'; ctx.fillRect(x0 + ((i * 37) % 150) + 5, 300 + ((i * 23) % 50), 3, 3); }
-  });
+  WORLDS.forEach((w, wi) => drawRegion(w, wi));
+  // separadores entre regiones: sombra suave + filo claro
+  for (let k = 1; k < WORLDS.length; k++) {
+    const x = k * 160, g = ctx.createLinearGradient(x - 10, 0, x + 10, 0);
+    g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(0.5, 'rgba(0,0,0,0.35)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(x - 10, MAP_TOP, 20, MAP_BOT - MAP_TOP);
+    ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillRect(x, MAP_TOP, 1, MAP_BOT - MAP_TOP);
+  }
   // partículas de clima
   for (const f of map.flakes) {
     const se = WORLDS[f.w].season;
-    ctx.fillStyle = se === 'winter' ? '#ffffff' : se === 'autumn' ? '#c8501f' : '#ffb7d5';
+    if (f.y < MAP_TOP) continue;
+    ctx.fillStyle = se === 'winter' ? '#ffffff' : se === 'autumn' ? '#e8792b' : '#ffd1e3';
     ctx.fillRect(Math.round(f.x), Math.round(f.y), se === 'winter' ? 2 : 3, 2);
   }
-  // camino entre nodos
   const N = WORLDS.length * LEVELS_PER_WORLD;
-  for (let i = 0; i < N - 1; i++) {
-    const a = mapNodePos(i), b = mapNodePos(i + 1);
-    const steps = Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 7);
-    for (let k = 1; k < steps; k++) {
-      const x = lerp(a.x, b.x, k / steps), y = lerp(a.y, b.y, k / steps);
-      ctx.fillStyle = i < SAVE.unlocked - 1 ? '#fff3b0' : 'rgba(40,30,60,0.35)';
-      ctx.fillRect(Math.round(x) - 1, Math.round(y) - 1, 3, 3);
-    }
-  }
-  // nodos
-  for (let i = 0; i < N; i++) {
-    const p = mapNodePos(i), lv = nodeLevel(i), unlocked = nodeUnlocked(i), isBoss = i % LEVELS_PER_WORLD === 3;
-    const st = lv ? levelStats(lv.id) : null, r = isBoss ? 12 : 9, sel = i === map.sel;
-    ctx.fillStyle = '#1b1b2f'; ctx.beginPath(); ctx.arc(p.x, p.y, r + 3, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = !unlocked ? '#8d8fa8' : st && st.done ? '#7cf2c4' : sel ? '#ff8fb8' : '#ffffff';
-    ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
-    if (!unlocked) { // candado
-      ctx.fillStyle = '#4b4b6a'; ctx.fillRect(p.x - 4, p.y - 2, 8, 6);
-      ctx.strokeStyle = '#4b4b6a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y - 2, 3, Math.PI, 0); ctx.stroke();
-    } else if (isBoss) drawHeart(p.x, p.y - 5, 1.1, '#ff6b9a'); // mamá espera aquí
-    else text(String(i % LEVELS_PER_WORLD + 1), p.x + 1, p.y + 1, 7, '#1b1b2f');
-    if (st && st.done) for (let k = 0; k < 3; k++) drawStar(p.x - 9 + k * 9, p.y + r + 8, 3.5, k < st.stars);
-    hitRects.push({ x: p.x - 14, y: p.y - 14, w: 28, h: 28, idx: i, zone: 'node' });
-  }
-  // mundos próximamente
+  drawPath(N);
+  for (let i = 0; i < N; i++) drawNode(i, mapNodePos(i));
+  // mundos bloqueados o próximamente: velo y placa
   WORLDS.forEach((w, wi) => {
-    if (w.levels.length) return;
-    ctx.fillStyle = 'rgba(40,40,80,0.22)'; ctx.fillRect(wi * 160, 118, 160, VH - 118); // velo suave: bloqueado pero con color
-    text(t('soon'), wi * 160 + 80, 140, 7, '#ffffff');
+    const firstLocked = !nodeUnlocked(wi * LEVELS_PER_WORLD);
+    if (!w.levels.length || firstLocked) { ctx.fillStyle = 'rgba(25,25,55,0.32)'; ctx.fillRect(wi * 160, MAP_TOP, 160, MAP_BOT - MAP_TOP); }
+    if (!w.levels.length) { drawPill(wi * 160 + 80, 160, 118, 18); text(t('soon'), wi * 160 + 80, 161, 7, '#ffffff'); }
   });
-  // Simba sobre el nodo elegido
+  // Simba sobre el nivel elegido
   const run = anim(A.hero, 'run'), idle = anim(A.hero, 'idle');
-  const target = mapNodePos(map.sel), moving = Math.abs(map.simX - target.x) > 1.5;
+  const target = mapNodePos(map.sel), moving = !!map.walk || Math.abs(map.simX - target.x) > 1.5;
   const f = moving && run ? frameAt(run, map.t, 12) : idle && frameAt(idle, map.t);
-  const bob = moving ? Math.abs(Math.sin(map.t * 12)) * 2 : 0;
-  drawFrame(f, map.simX, map.simY - 13 - bob, map.simX > target.x + 1, 0.5, 0.5); // de pie sobre el nodo
-  // nombres de las estaciones
-  WORLDS.forEach((w, wi) => text(w.name[SETTINGS.lang] || w.name.es, wi * 160 + 80, 126, 8, wi === Math.floor(map.sel / 4) ? '#ffffff' : '#e5e7eb'));
+  const bob = moving ? Math.abs(Math.sin(map.t * 12)) * 2 : 0, rr = map.sel % 4 === 3 && !map.walk ? 14 : 11;
+  groundShadow(map.simX, map.simY - rr - 1, 11);
+  drawFrame(f, map.simX, map.simY - rr - 2 - bob, map.face < 0, 0.55, 0.55);
+  if (map.pop) { // destello al llegar al nivel nuevo
+    const p = mapNodePos(map.pop.idx), k = map.pop.t / 1.2;
+    ctx.strokeStyle = `rgba(255,243,176,${1 - k})`; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 14 + k * 26, 0, Math.PI * 2); ctx.stroke();
+    for (let j = 0; j < 6; j++) { const a = j * Math.PI / 3 + k * 2; drawStar(p.x + Math.cos(a) * (16 + k * 22), p.y + Math.sin(a) * (16 + k * 22), 3.5 * (1 - k) + 0.5, true); }
+  }
+  // banderines con el nombre de cada estación
+  const curW = Math.floor(map.sel / 4);
+  WORLDS.forEach((w, wi) => drawBanner(wi * 160 + 80, MAP_TOP + 10, (w.name[SETTINGS.lang] || w.name.es).toUpperCase(), SEASON[w.season].dark, wi === curW));
 
   // panel superior con el nivel elegido
-  const lv = nodeLevel(map.sel), wd = WORLDS[Math.floor(map.sel / 4)];
-  panel(14, 10, VW - 28, 92);
-  drawLifeIcon(40, 34, 26); text('x' + SAVE.lives, 58, 35, 11, '#ffffff', 'left');
-  drawStar(VW - 92, 33, 9, true); text(totalStars() + '/' + ALL_LEVELS.length * 3, VW - 78, 35, 9, '#ffd23f', 'left');
+  const lv = nodeLevel(map.sel), wd = WORLDS[curW];
+  panel(14, 8, VW - 28, 88);
+  drawLifeIcon(40, 32, 26); text('x' + SAVE.lives, 58, 33, 11, '#ffffff', 'left');
+  drawStar(VW - 92, 31, 9, true); text(totalStars() + '/' + ALL_LEVELS.length * 3, VW - 78, 33, 9, '#ffd23f', 'left');
   if (lv) {
-    text(t('world') + ' ' + lv.id + '  ·  ' + (wd.name[SETTINGS.lang] || wd.name.es).toUpperCase(), VW / 2, 30, 10, '#ffb3d1');
-    text(lv.name[SETTINGS.lang] || lv.name.es, VW / 2, 52, 12, '#ffffff');
+    text(t('world') + ' ' + lv.id + '  ·  ' + (wd.name[SETTINGS.lang] || wd.name.es).toUpperCase(), VW / 2, 27, 10, '#ffb3d1');
+    text(lv.name[SETTINGS.lang] || lv.name.es, VW / 2, 48, 12, '#ffffff');
     const st = levelStats(lv.id);
-    text(st.done ? `${t('best_fish')}: ${st.fish}/${levelFishTotal(lv)}` : (map.sel % 4 === 3 ? t('boss_level') : t('new_level')), VW / 2, 72, 8, '#fff3b0');
-    button(VW / 2 - 60, 80, 120, 18, t('play'), true, map.sel);
+    text(st.done ? `${t('best_fish')}: ${st.fish}/${levelFishTotal(lv)}` : (map.sel % 4 === 3 ? t('boss_level') : t('new_level')), VW / 2, 67, 8, '#fff3b0');
+    button(VW / 2 - 60, 76, 120, 16, t('play'), true, map.sel);
     hitRects[hitRects.length - 1].zone = 'play';
   }
-  ctx.fillStyle = 'rgba(15,15,35,0.55)'; ctx.fillRect(0, 340, VW, 20);
+  ctx.fillStyle = 'rgba(15,15,35,0.75)'; ctx.fillRect(0, MAP_BOT, VW, VH - MAP_BOT);
   text(IS_TOUCH ? t('map_hint_touch') : t('map_hint_keys'), VW / 2, 350, 7, '#ffffff');
 }
 

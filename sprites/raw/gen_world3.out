@@ -1,0 +1,38 @@
+>> bg_autumn
+id: f4216667-ee7e-4c0b-9a8c-f89c9978d032 | job_id: f4216667-ee7e-4c0b-9a8c-f89c9978d032 | description: warm autumn landscape background for a 2D platformer game at golden hour, a calm blue lake in the middle distance reflecting a big low golden
+>> bg_autumn_wait
+1 job(s) finished after 21s, 0 still running: | f4216667-ee7e-4c0b-9a8c-f89c9978d032 completed (image_pixflux, took 22s) | hint: nothing else is running
+>> tiles_autumn
+id: 34075bd0-3525-4810-91e5-0b5872bd1e35 | terrain: Sidescroller: dark brown forest soil with small roots and pebbles with grass covered with fallen orange and red autumn leaves | type: sidescroller (side-view, transparent bg, no slopes) | status
+>> tiles_autumn_wait
+1 job(s) finished after 76s, 0 still running: | adf33134-0839-4912-90ad-9ffc97dcca59 completed (generation, took 77s) | hint: nothing else is running
+>> squirrel
+id: c790aae9-e52f-4444-af00-506ce5abbe17 | job_id: c790aae9-e52f-4444-af00-506ce5abbe17 | description: mischievous red squirrel enemy standing upright holding an acorn ready to throw, big fluffy tail, side view facing left | size: 64x64px | transpa
+>> squirrel_wait
+1 job(s) finished after 40s, 0 still running: | c790aae9-e52f-4444-af00-506ce5abbe17 completed (image_pixflux, took 43s) | hint: nothing else is running
+>> boar
+id: f9e27861-7ea6-4549-9709-a1708676e496 | job_id: f9e27861-7ea6-4549-9709-a1708676e496 | description: angry wild boar enemy with small tusks and bristly brown fur, side view facing left, ready to charge | size: 64x64px | transparent: True | asset_id
+>> boar_wait
+1 job(s) finished after 30s, 0 still running: | f9e27861-7ea6-4549-9709-a1708676e496 completed (image_pixflux, took 31s) | hint: nothing else is running
+>> hedgehog
+id: 0f847348-64b6-4eae-bf10-27154939807f | job_id: 0f847348-64b6-4eae-bf10-27154939807f | description: friendly cute hedgehog with a tiny red scarf, side view facing left, smiling, standing on the ground | size: 64x64px | transparent: True | asset_id
+>> hedgehog_wait
+1 job(s) finished after 18s, 0 still running: | 0f847348-64b6-4eae-bf10-27154939807f completed (image_pixflux, took 20s) | hint: nothing else is running
+>> leaf_raft
+id: da633eb6-31c5-40d0-b5b3-4830f958eaa8 | job_id: da633eb6-31c5-40d0-b5b3-4830f958eaa8 | description: one giant orange autumn leaf floating flat on water, seen from the side, horizontal, game platform | size: 96x32px | transparent: True | asset_id: 
+>> leaf_raft_wait
+1 job(s) finished after 21s, 0 still running: | da633eb6-31c5-40d0-b5b3-4830f958eaa8 completed (image_pixflux, took 22s) | hint: nothing else is running
+>> boss_squirrel
+id: eec15ccd-50c9-4b37-ae7f-7c17330271d8 | job_id: eec15ccd-50c9-4b37-ae7f-7c17330271d8 | description: giant boss squirrel, plump with a huge fluffy red tail, holding a big acorn, mischievous angry face, side view facing left | size: 128x96px | tra
+>> boss_squirrel_wait
+1 job(s) finished after 37s, 0 still running: | eec15ccd-50c9-4b37-ae7f-7c17330271d8 completed (image_pixflux, took 38s) | hint: nothing else is running
+>> boss_squirrel_eat
+id: 8ebc52dd-d1a6-4515-b17d-27872c6f4986 | job_id: 8ebc52dd-d1a6-4515-b17d-27872c6f4986 | action: the squirrel lifts a glowing golden acorn to its mouth and eats it happily, chewing, regaining energy | frames: 8 | size: 128x96px | transparent: True | a
+>> boss_squirrel_eat_wait
+1 job(s) finished after 112s, 0 still running: | 8ebc52dd-d1a6-4515-b17d-27872c6f4986 completed (animation, took 113s) | hint: nothing else is running
+== LISTO ==
+credits: $0.00
+generations_remaining: 3
+generations_used: 37
+generations_total: 40
+subscription: trial

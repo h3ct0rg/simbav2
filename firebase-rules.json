@@ -1,0 +1,27 @@
+{
+  "rules": {
+    "scores": {
+      ".read": true,
+      ".write": true
+    },
+    "simba": {
+      ".read": true,
+      "online": {
+        "$id": {
+          ".write": "$id.length <= 40",
+          ".validate": "newData.isNumber() && newData.val() <= now + 60000"
+        }
+      },
+      "players": {
+        "$id": {
+          ".write": "$id.length <= 40 && newData.exists()",
+          ".validate": "newData.hasChildren(['last', 'lvl'])",
+          "first": { ".validate": "newData.isNumber() && newData.val() <= now + 60000" },
+          "last": { ".validate": "newData.isNumber() && newData.val() <= now + 60000" },
+          "lvl": { ".validate": "newData.isString() && newData.val().length <= 8" },
+          "$other": { ".validate": false }
+        }
+      }
+    }
+  }
+}

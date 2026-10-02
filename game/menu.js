@@ -6,13 +6,13 @@
 
 let menuSel = 0, menuT = 0, settingsFrom = 'menu';
 let hitRects = []; // zonas clicables del frame actual
-const MENU_STATES = ['menu', 'settings', 'pause'];
+const MENU_STATES = ['menu', 'settings', 'pause', 'slots'];
 const isMenuState = () => MENU_STATES.includes(state);
 
 // ---------- Definición de los menús ----------
 function mainItems() {
   return [
-    { type: 'button', label: t('play'), act: () => { SFX.select(); openMap(); } },
+    { type: 'button', label: t('play'), act: () => { SFX.select(); openSlots(); } },
     { type: 'button', label: t('settings'), act: () => openSettings('menu') },
   ];
 }
@@ -39,11 +39,12 @@ function settingsItems() {
   return items;
 }
 function currentItems() {
-  return state === 'menu' ? mainItems() : state === 'pause' ? pauseItems() : state === 'settings' ? settingsItems() : [];
+  return state === 'menu' ? mainItems() : state === 'pause' ? pauseItems() : state === 'settings' ? settingsItems()
+    : state === 'slots' ? slotItems() : [];
 }
 
 // ---------- Acciones ----------
-function openMainMenu() { state = 'menu'; menuSel = 0; SFX.backSnd(); applyVolumes(); }
+function openMainMenu() { state = 'menu'; menuSel = 0; SFX.backSnd(); applyVolumes(); SAVE_SLOT = -1; }
 function openSettings(from) { settingsFrom = from; state = 'settings'; menuSel = 0; SFX.select(); }
 function closeSettings() { state = settingsFrom; menuSel = settingsFrom === 'pause' ? 3 : 1; SFX.backSnd(); }
 function openPause() { if (state !== 'play') return; state = 'pause'; menuSel = 0; SFX.select(); applyVolumes(); }
@@ -88,10 +89,15 @@ function menuKey(code) {
   if (!items.length) return false;
   const up = code === 'ArrowUp' || code === 'KeyW', down = code === 'ArrowDown' || code === 'KeyS';
   if (up || down) { menuSel = (menuSel + (down ? 1 : -1) + items.length) % items.length; SFX.move(); return true; }
+  if (state === 'slots' && ['ArrowLeft', 'KeyA', 'ArrowRight', 'KeyD'].includes(code)) {
+    const d = code === 'ArrowLeft' || code === 'KeyA' ? -1 : 1;
+    menuSel = menuSel >= SLOT_COUNT ? (d < 0 ? SLOT_COUNT - 1 : 0) : (menuSel + d + SLOT_COUNT) % SLOT_COUNT; SFX.move(); return true;
+  }
   if (code === 'ArrowLeft' || code === 'KeyA') { changeItem(items[menuSel], -1); return true; }
   if (code === 'ArrowRight' || code === 'KeyD') { changeItem(items[menuSel], 1); return true; }
   if (code === 'Enter' || code === 'Space') { activate(items[menuSel]); return true; }
   if (code === 'Escape' || code === 'Backspace' || code === 'KeyP') {
+    if (state === 'slots') { openMainMenu(); return true; }
     if (state === 'settings') closeSettings();
     else if (state === 'pause') resumeGame();
     return true;
@@ -116,6 +122,7 @@ function menuPointer(clientX, clientY) {
   const items = currentItems();
   const it = items[h.idx];
   menuSel = h.idx;
+  if (h.zone === 'delete') return; // borrar: se mantiene pulsado (ver slotHold)
   if (h.zone === 'left') changeItem(it, -1);
   else if (h.zone === 'right') changeItem(it, 1);
   else if (h.zone === 'bar' && it.type === 'slider') {
@@ -237,6 +244,7 @@ function drawMainMenu() {
   const items = mainItems(), w = 240, h = 36;
   items.forEach((it, i) => button(VW / 2 - w / 2, 158 + i * 50, w, h, it.label, i === menuSel, i));
   text(IS_TOUCH ? t('menu_hint_touch') : t('menu_hint_keys'), VW / 2, 346, 8, '#e5e7eb');
+  drawPlayerStats();
 }
 
 function drawSettings() {
@@ -290,4 +298,112 @@ function drawPauseMenu() {
   panel(px, py, pw, ph);
   text(t('pause'), VW / 2, py + 28, 18, '#bfe3ff');
   items.forEach((it, i) => button(VW / 2 - w / 2, py + 56 + i * 42, w, h, it.label, i === menuSel, i));
+}
+
+// ============================================================
+//  Pantalla "Elige una partida": 3 ranuras de guardado
+//  · Enter / toque: jugar esa partida (si está vacía, empieza una nueva)
+//  · Borrar: MANTENER pulsado 1,5 s (botón BORRAR, o tecla X / Supr) para evitar accidentes
+// ============================================================
+const DELETE_HOLD = 1.5;
+let slotHold = null; // { idx, t } mientras se mantiene pulsado BORRAR
+let slotCache = [];
+function openSlots() {
+  state = 'slots'; SAVE_SLOT = -1;
+  slotCache = [0, 1, 2].map(readSlot);
+  const last = slotCache.reduce((best, d, i) => (d && (best < 0 || d.lastPlayed > slotCache[best].lastPlayed) ? i : best), -1);
+  menuSel = last >= 0 ? last : 0; // se preselecciona la última partida jugada
+}
+function slotItems() {
+  return [0, 1, 2].map(i => ({ type: 'button', label: 'slot', act: () => playSlot(i) }))
+    .concat([{ type: 'button', label: t('back'), act: openMainMenu }]);
+}
+function playSlot(i) {
+  SFX.select();
+  const isNew = !slotCache[i];
+  selectSlot(i);
+  if (isNew) flash(t('new_game'), 1.5);
+  openMap();
+}
+function slotHoldStart(i) { if (slotCache[i]) slotHold = { idx: i, t: 0 }; }
+function slotHoldEnd() { slotHold = null; }
+function updateSlots(dt) {
+  // teclado: mantener X o Supr sobre la tarjeta elegida
+  const keyHold = (keys.KeyX || keys.Delete) && menuSel < SLOT_COUNT && slotCache[menuSel];
+  if (keyHold && !slotHold) slotHoldStart(menuSel);
+  if (!keyHold && slotHold && slotHold.key) slotHold = null;
+  if (keyHold && slotHold) slotHold.key = true;
+  if (!slotHold) return;
+  const before = slotHold.t;
+  slotHold.t += dt;
+  if (Math.floor(slotHold.t * 6) !== Math.floor(before * 6)) beep(300 + slotHold.t * 300, 300 + slotHold.t * 300, 0.04, 'square', 0.03);
+  if (slotHold.t >= DELETE_HOLD) {
+    deleteSlot(slotHold.idx); slotCache[slotHold.idx] = null;
+    SFX.backSnd(); flashSlot = { idx: slotHold.idx, t: 1.2 };
+    slotHold = null;
+  }
+}
+let flashSlot = null;
+const fmtTime = s => { const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60; return h ? `${h}h ${String(m).padStart(2, '0')}m` : `${m}m`; };
+// Nivel más avanzado de una partida (el último desbloqueado que existe)
+const furthestLevel = d => ALL_LEVELS[Math.min(d.unlocked, ALL_LEVELS.length) - 1];
+
+function drawSlotCard(i, x, y, w, h, sel) {
+  const d = slotCache[i], lift = sel ? Math.round(Math.sin(menuT * 6) * 1.5) - 2 : 0;
+  y += lift;
+  pixRect(x - 3, y - 3, w + 6, h + 6, sel ? '#ff8fb8' : '#1b1b2f');
+  pixRect(x, y, w, h, 'rgba(36,38,82,0.95)');
+  ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(x + 4, y + 3, w - 8, 3);
+  text(t('slot') + ' ' + (i + 1), x + w / 2, y + 16, 9, sel ? '#ffb3d1' : '#bfe3ff');
+  hitRects.push({ x, y, w, h: h - 34, idx: i, zone: 'row' });
+  if (!d) { // vacía
+    ctx.fillStyle = sel ? '#ff8fb8' : '#5a5fa8';
+    ctx.fillRect(x + w / 2 - 3, y + 62, 6, 30); ctx.fillRect(x + w / 2 - 15, y + 74, 30, 6);
+    text(t('new_game'), x + w / 2, y + 118, 8, '#ffffff');
+    if (flashSlot && flashSlot.idx === i && flashSlot.t > 0) text(t('deleted'), x + w / 2, y + 140, 7, '#ff6b6b');
+    return;
+  }
+  const lv = furthestLevel(d), wd = lv.world, se = SEASON[wd.season];
+  // franja con el color de la estación y nivel alcanzado
+  ctx.fillStyle = se.ground; ctx.fillRect(x + 6, y + 28, w - 12, 22);
+  ctx.fillStyle = se.dark; ctx.fillRect(x + 6, y + 47, w - 12, 3);
+  // sobre la franja de color: texto oscuro SIN sombra (con sombra se veía borroso)
+  ctx.font = 'bold 7px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#1b1b2f';
+  ctx.fillText((t('world') + ' ' + wd.id + ' · ' + (wd.name[SETTINGS.lang] || wd.name.es)).toUpperCase().replace(/[ÁÉÍÓÚ]/g, c => ({ Á: 'A', É: 'E', Í: 'I', Ó: 'O', Ú: 'U' })[c]), x + w / 2, y + 39);
+  const nm = wrapText(lv.id + ' ' + (lv.name[SETTINGS.lang] || lv.name.es), 7, w - 16);
+  nm.slice(0, 2).forEach((l, k) => text(l, x + w / 2, y + 62 + k * 12, 7, '#fff3b0'));
+  // estadísticas
+  const fish = Object.values(d.levels).reduce((s, l) => s + (l.fish || 0), 0);
+  const sx = x + 14;
+  drawStar(sx + 6, y + 96, 6, true); text(totalStars(d) + '/' + ALL_LEVELS.length * 3, sx + 18, y + 97, 7, '#ffd23f', 'left');
+  drawLifeIcon(sx + 6, y + 114, 14); text('x' + d.lives, sx + 18, y + 115, 7, '#ffffff', 'left');
+  drawFish({ x: sx + w / 2 - 10, y: y + 89, t: 0, taken: false }, 0, 0); text(String(fish), sx + w / 2 + 6, y + 97, 7, '#ffd23f', 'left');
+  text(fmtTime(d.playTime || 0), sx + w / 2 + 6, y + 115, 7, '#c7cbe8', 'left');
+  // relojito dibujado (la fuente no trae ese símbolo)
+  ctx.strokeStyle = '#c7cbe8'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(sx + w / 2 - 2, y + 114, 5, 0, Math.PI * 2); ctx.moveTo(sx + w / 2 - 2, y + 114); ctx.lineTo(sx + w / 2 - 2, y + 110); ctx.moveTo(sx + w / 2 - 2, y + 114); ctx.lineTo(sx + w / 2 + 1, y + 115); ctx.stroke();
+  // mamá: con el peso que alcanzó en el último mundo terminado
+  const done = Object.keys(d.mom || {}).map(Number).sort((a, b) => b - a)[0];
+  if (done) {
+    const wgt = d.mom[done], look = momLook(wgt);
+    const im = look < THIN_LOOKS ? A.motherThin[look] : anim(A.mother, 'idle') && A.mother.anims.idle.frames[0];
+    drawFrame(im, x + w - 26, y + 146, true, look > THIN_LOOKS ? 0.62 : 0.52, 0.52);
+  }
+  const date = d.lastPlayed ? new Date(d.lastPlayed).toLocaleDateString(SETTINGS.lang === 'en' ? 'en-US' : 'es-ES', { day: 'numeric', month: 'short' }) : '';
+  text(date, x + 14, y + 138, 6, '#8f95d6', 'left');
+  // botón BORRAR (mantener pulsado)
+  const bx = x + 10, by = y + h - 28, bw = w - 20, bh = 20;
+  pixRect(bx - 2, by - 2, bw + 4, bh + 4, '#1b1b2f');
+  pixRect(bx, by, bw, bh, '#5a2333');
+  if (slotHold && slotHold.idx === i) { ctx.fillStyle = '#ff4d6d'; ctx.fillRect(bx + 2, by + 2, (bw - 4) * clamp(slotHold.t / DELETE_HOLD, 0, 1), bh - 4); }
+  text(slotHold && slotHold.idx === i ? t('hold_delete') : t('delete'), x + w / 2, by + bh / 2 + 1, 7, '#ffffff');
+  hitRects.push({ x: bx, y: by, w: bw, h: bh, idx: i, zone: 'delete' });
+}
+
+function drawSlots() {
+  if (flashSlot) flashSlot.t -= 1 / 60;
+  text(t('choose_slot'), VW / 2, 34, 16, '#ffffff');
+  const w = 180, h = 236, gap = 20, x0 = VW / 2 - (w * 3 + gap * 2) / 2;
+  for (let i = 0; i < SLOT_COUNT; i++) drawSlotCard(i, x0 + i * (w + gap), 58, w, h, menuSel === i);
+  button(VW / 2 - 60, 312, 120, 22, t('back'), menuSel === SLOT_COUNT, SLOT_COUNT);
+  text(IS_TOUCH ? t('slots_hint_touch') : t('slots_hint_keys'), VW / 2, 350, 6, '#e5e7eb');
 }

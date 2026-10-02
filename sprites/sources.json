@@ -132,6 +132,25 @@
     },
     "log": {
       "url": "https://api.pixellab.ai/mcp/images/95517e6d-a0a1-48dd-b79e-6ef3743257e8/download"
+    },
+    "bg_autumn": {
+      "url": "https://api.pixellab.ai/mcp/images/f4216667-ee7e-4c0b-9a8c-f89c9978d032/download",
+      "crop": false
+    },
+    "squirrel": {
+      "url": "https://api.pixellab.ai/mcp/images/c790aae9-e52f-4444-af00-506ce5abbe17/download"
+    },
+    "boar": {
+      "url": "https://api.pixellab.ai/mcp/images/f9e27861-7ea6-4549-9709-a1708676e496/download"
+    },
+    "hedgehog": {
+      "url": "https://api.pixellab.ai/mcp/images/0f847348-64b6-4eae-bf10-27154939807f/download"
+    },
+    "leaf_raft": {
+      "url": "https://api.pixellab.ai/mcp/images/da633eb6-31c5-40d0-b5b3-4830f958eaa8/download"
+    },
+    "boss_squirrel": {
+      "url": "https://api.pixellab.ai/mcp/images/eec15ccd-50c9-4b37-ae7f-7c17330271d8/download"
     }
   },
   "tilesets": {
@@ -142,6 +161,10 @@
     "tiles_summer": {
       "image": "raw/tileset_summer.png",
       "meta": "raw/tileset_summer_meta.json"
+    },
+    "tiles_autumn": {
+      "recolor_from": "tiles",
+      "note": "el tileset generado (raw/tileset_autumn.png) salió con fondo opaco y ladrillos; se recolorea el de primavera"
     }
   },
   "frame_sets": {
@@ -170,6 +193,24 @@
           "files": [
             "raw/crab_slam/8.png"
           ]
+        }
+      }
+    },
+    "boss_squirrel_eat": {
+      "source": "animate_image 8ebc52dd-d1a6-4515-b17d-27872c6f4986 sobre la imagen de Doña Bellota",
+      "anims": {
+        "eat": {
+          "files": [
+            "raw/squirrel_eat/1.png",
+            "raw/squirrel_eat/2.png",
+            "raw/squirrel_eat/3.png",
+            "raw/squirrel_eat/4.png",
+            "raw/squirrel_eat/5.png",
+            "raw/squirrel_eat/6.png",
+            "raw/squirrel_eat/7.png",
+            "raw/squirrel_eat/8.png"
+          ],
+          "fps": 6
         }
       }
     }

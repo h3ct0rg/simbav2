@@ -62,6 +62,9 @@ const A = {
   motherThin: Array.isArray(S.mother_thin) ? S.mother_thin.map(img) : [], // de la más flaca a la menos
   bg: imgOrNull(S.bg),
   bgSummer: imgOrNull(S.bg_summer),
+  bgAutumn: imgOrNull(S.bg_autumn),
+  squirrel: imgOrNull(S.squirrel), boar: imgOrNull(S.boar), hedgehog: imgOrNull(S.hedgehog), leafRaft: imgOrNull(S.leaf_raft),
+  bossSquirrel: imgOrNull(S.boss_squirrel), bossSquirrelEat: loadSet(S.boss_squirrel_eat),
   crab: imgOrNull(S.crab), bee: imgOrNull(S.bee), urchin: imgOrNull(S.urchin), turtle: imgOrNull(S.turtle),
   mushroom: imgOrNull(S.mushroom), log: imgOrNull(S.log),
   bossCrab: loadSet(S.boss_crab), // idle (pinzas arriba) · slam (golpe, 8 frames) · stuck (pinzas clavadas)
@@ -71,9 +74,11 @@ const A = {
   lifeIcon: imgOrNull(S.life_icon),
   tiles: S.tiles ? Object.fromEntries(Object.entries(S.tiles).map(([k, v]) => [k, img(v)])) : null,
   tilesSummer: S.tiles_summer ? Object.fromEntries(Object.entries(S.tiles_summer).map(([k, v]) => [k, img(v)])) : null,
+  tilesAutumn: S.tiles_autumn ? Object.fromEntries(Object.entries(S.tiles_autumn).map(([k, v]) => [k, img(v)])) : null,
 };
 
 // ---------------- Estaciones ----------------
+const AUTUMN_HORIZON = 200; // fila de la imagen de otoño donde la hierba toca la tierra
 // Fondo, terreno, agua y ambiente de cada mundo. `horizon` = fila de la imagen de fondo
 // donde la hierba toca la tierra (se alinea con el césped jugable).
 const SEASON_CFG = {
@@ -81,6 +86,8 @@ const SEASON_CFG = {
     sky: ['#5fd3f5', '#a8ecf7'] },
   summer: { bg: () => A.bgSummer, tiles: () => A.tilesSummer || A.tiles, horizon: 212, water: true, ambient: 'sparkles',
     sky: ['#6fe2f7', '#b8f2f7'], waterfall: { x0: 258, x1: 286, y0: 86, y1: 170 } },
+  autumn: { bg: () => A.bgAutumn, tiles: () => A.tilesAutumn || A.tiles, horizon: AUTUMN_HORIZON, water: true, ambient: 'leaves',
+    sky: ['#f7b267', '#ffe0a8'], wind: true, sunrays: true },
 };
 const curSeason = () => (LV && !['menu', 'settings'].includes(state) ? LV.world.season : 'spring');
 const seasonCfg = s => SEASON_CFG[s] || SEASON_CFG.spring;
@@ -162,9 +169,21 @@ const BASS_SUMMER = [
   48, 55, 52, 55,  53, 57, 60, 57,  55, 59, 62, 59,  48, 55, 48, 0,
   48, 55, 52, 55,  53, 57, 60, 57,  55, 59, 55, 50,  48, 52, 48, 0,
 ];
+// Otoño: tono menor, más pausado y nostálgico
+const MELODY_AUTUMN = [
+  69, 0, 72, 76, 74, 72, 71, 0,    72, 74, 76, 0, 74, 72, 69, 0,
+  67, 0, 71, 74, 72, 71, 69, 0,    71, 72, 74, 76, 72, 0, 0, 0,
+  76, 0, 79, 81, 79, 76, 74, 0,    72, 74, 76, 79, 77, 76, 74, 0,
+  72, 0, 71, 69, 71, 72, 71, 67,   69, 71, 69, 0, 69, 0, 0, 0,
+];
+const BASS_AUTUMN = [
+  45, 52, 45, 52,  41, 48, 41, 48,  43, 50, 43, 50,  45, 52, 40, 0,
+  45, 52, 45, 52,  41, 48, 41, 48,  43, 50, 47, 50,  45, 52, 45, 0,
+];
 const MUSIC_CFG = {
   spring: { melody: MELODY, bass: BASS, bpm: 132, lead: 'square', transpose: 0 },
   summer: { melody: MELODY_SUMMER, bass: BASS_SUMMER, bpm: 146, lead: 'triangle', transpose: 2 },
+  autumn: { melody: MELODY_AUTUMN, bass: BASS_AUTUMN, bpm: 118, lead: 'square', transpose: 0 },
 };
 const musicCfg = () => {
   const season = state === 'map' ? WORLDS[Math.floor(map.sel / LEVELS_PER_WORLD)].season : curSeason();
@@ -233,6 +252,11 @@ const SFX = {
   boing: () => { beep(180, 720, 0.22, 'triangle', 0.09); beep(360, 1100, 0.18, 'sine', 0.05, 0.03); },
   splash: () => { beep(900, 120, 0.35, 'sawtooth', 0.04); beep(500, 80, 0.4, 'triangle', 0.05, 0.05); },
   prick: () => beep(1400, 500, 0.12, 'square', 0.06),
+  squeak: () => { beep(1500, 1900, 0.06, 'square', 0.04); beep(1700, 1300, 0.06, 'square', 0.04, 0.07); },
+  plop: () => { beep(420, 120, 0.25, 'sine', 0.08); beep(900, 300, 0.15, 'triangle', 0.04, 0.05); },
+  geyser: () => beep(200, 900, 0.5, 'sawtooth', 0.03),
+  wind: () => { beep(300, 500, 0.9, 'sine', 0.035); beep(320, 260, 0.9, 'triangle', 0.025, 0.2); },
+  snort: () => { beep(160, 90, 0.18, 'sawtooth', 0.07); beep(180, 100, 0.15, 'sawtooth', 0.06, 0.2); },
 };
 
 // ---------------- Input ----------------
@@ -289,7 +313,7 @@ function goFullscreen() {
     .catch(() => { });
 }
 const joy = document.getElementById('joy'), knob = document.getElementById('knob');
-const JR = 46; // radio útil del joystick en px
+let JR = 46; // radio útil del joystick en px (se ajusta al tamaño real del joystick)
 let joyId = null, joyCx = 0, joyCy = 0, joyDown = false;
 function moveJoy(t) {
   let dx = t.clientX - joyCx, dy = t.clientY - joyCy;
@@ -315,6 +339,7 @@ if (joy) {
     const t = e.changedTouches[0];
     const r = joy.getBoundingClientRect();
     joyId = t.identifier; joyCx = r.left + r.width / 2; joyCy = r.top + r.height / 2;
+    JR = r.width * 0.36; // el joystick cambia de tamaño según la pantalla
     joy.classList.add('on'); moveJoy(t);
   }, { passive: false });
   addEventListener('touchmove', e => {
@@ -345,12 +370,21 @@ canvas.addEventListener('touchstart', e => {
   if (state === 'play') return;
   e.preventDefault();
   const tc = e.changedTouches[0];
+  if (slotPointerDown(tc.clientX, tc.clientY)) return;
   if (isMenuState()) menuPointer(tc.clientX, tc.clientY);
   else if (state === 'map') mapPointer(tc.clientX, tc.clientY);
   else pressStart();
 }, { passive: false });
+function slotPointerDown(cx_, cy_) {
+  const h = hitAt(toCanvas(cx_, cy_));
+  if (state === 'slots' && h && h.zone === 'delete') { menuSel = h.idx; slotHoldStart(h.idx); return true; }
+  return false;
+}
+addEventListener('mouseup', () => { if (slotHold && !slotHold.key) slotHoldEnd(); });
+addEventListener('touchend', () => { if (slotHold && !slotHold.key) slotHoldEnd(); });
 canvas.addEventListener('mousedown', e => {
   unlockAudio();
+  if (slotPointerDown(e.clientX, e.clientY)) return;
   if (isMenuState()) menuPointer(e.clientX, e.clientY);
   else if (state === 'map') mapPointer(e.clientX, e.clientY);
   else if (state !== 'play') pressStart();
@@ -401,7 +435,7 @@ function moveY(e, dy) {
     const r = Math.floor((e.y + e.h) / TS);
     for (let c = l; c <= rr; c++) {
       const t = tile(c, r);
-      if (t === SOLID || (t === ONEWAY && prevBottom <= r * TS + 0.5)) { e.y = r * TS - e.h; e.vy = 0; e.onGround = true; break; }
+      if (t === SOLID || (t === ONEWAY && prevBottom <= r * TS + 0.5 && !(e.dropT > 0))) { e.y = r * TS - e.h; e.vy = 0; e.onGround = true; break; }
     }
   } else if (dy < 0) {
     const r = Math.floor(e.y / TS);
@@ -414,7 +448,7 @@ const overlap = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h 
 let player, particles, checkpoint, mother;
 let state = 'menu', hearts = 3, fishCount = 0, timeT = 0, shake = 0, deadT = 0, msgT = 0, msg = '';
 let introT = 0, clearT = 0, dieT = 0, doorT = 0, doorTo = null, talk = null, clearInfo = null;
-let lifesFound = 0;
+let lifesFound = 0, autosaveT = 0;
 let camX = 0, camY = 0;
 
 // Alimentar a mamá (nivel 4): se le entregan los pescados de TODO el mundo
@@ -434,8 +468,8 @@ function makePlayer(x, y) {
   return { x, y, w: 30, h: 26, vx: 0, vy: 0, onGround: false, facing: 1, coyote: 0, jumpBuffer: 0,
     invuln: 0, sx: 1, sy: 1, animT: 0, dustT: 0, prevBottom: 0 };
 }
-const WALK_SPEED = { dog: 62, rat: 105, crab: 80 };
-const WALKER_SIZE = { dog: [38, 28], rat: [28, 18], crab: [30, 22] };
+const WALK_SPEED = { dog: 62, rat: 105, crab: 80, boar: 55 };
+const WALKER_SIZE = { dog: [38, 28], rat: [28, 18], crab: [30, 22], boar: [40, 30] };
 
 // Construye el estado jugable de un área a partir de su mapa
 function buildArea(rows, isRoom, roomId, style) {
@@ -452,6 +486,13 @@ function buildArea(rows, isRoom, roomId, style) {
       w: b.type === 'bee' ? 26 : 28, h: b.type === 'bee' ? 22 : 20,
       vx: 0, alive: true, deadT: 0, animT: Math.random() * 6, speed: (b.type === 'bee' ? 0.9 : 1.1) * d })),
   ];
+  // ardillas: quietas, lanzan bellotas cuando Simba se acerca
+  for (const q of a.squirrels) a.enemies.push({ type: 'squirrel', x: q.c * TS + 4, y: (q.r + 1) * TS - 30, w: 24, h: 30, vx: 0, vy: 0,
+    alive: true, deadT: 0, animT: Math.random() * 3, throwT: 1 + Math.random(), facing: -1 });
+  // hojas gigantes que se hunden (se tratan como plataformas flotantes)
+  for (const l of a.leaves) a.movers.push({ axis: 'leaf', c: l.c, r: l.r });
+  // géiseres: chorro periódico (desfasados entre sí)
+  a.geyserObjs = a.geysers.map((g, i) => ({ x: g.c * TS + TS / 2, y: (g.r + 1) * TS, t: (i * 1.3) % 3.4, active: false }));
   // erizos: pinchan siempre (no se pueden pisar)
   a.urchinObjs = a.urchins.map(u => ({ x: u.c * TS + 3, y: (u.r + 1) * TS - 24, w: 26, h: 24, t: Math.random() * 6 }));
   // hongos saltarines
@@ -459,9 +500,10 @@ function buildArea(rows, isRoom, roomId, style) {
   // troncos que se mueven: 'x' recorre el hueco libre a sus lados (hasta 3 casillas), 'y' sube hasta 3 filas
   a.moverObjs = a.movers.map(m => {
     const free = dir => { let n = 0; while (n < 3) { const c = dir < 0 ? m.c - 1 - n : m.c + 3 + n; if (c < 0 || c >= a.cols || a.grid[m.r][c]) break; n++; } return n; };
-    const amp = m.axis === 'x' ? Math.min(free(-1), free(1)) * TS : 3 * TS;
+    const amp = m.axis === 'x' ? Math.min(free(-1), free(1)) * TS : m.axis === 'leaf' ? 0 : 3 * TS;
     return { axis: m.axis, x0: m.c * TS, y0: m.r * TS, x: m.c * TS, y: m.r * TS, w: 3 * TS, h: 14, amp,
-      t: Math.random() * 6, period: m.axis === 'x' ? 2.6 + amp / TS * 0.6 : 3.4, dx: 0, dy: 0 };
+      t: Math.random() * 6, period: m.axis === 'x' ? 2.6 + amp / TS * 0.6 : 3.4, dx: 0, dy: 0,
+      leaf: m.axis === 'leaf' ? { st: 'float', t: 0, stand: 0 } : null, solid: true };
   });
   a.fishes = a.fish.map(f => ({ x: f.c * TS + 8, y: f.r * TS + 8, w: 16, h: 14, taken: false, t: Math.random() * 6 }));
   // vidas extra: cada una tiene una clave única y, una vez recogida, no vuelve a aparecer
@@ -484,9 +526,10 @@ function startLevel(id) {
   hearts = 3; fishCount = 0; timeT = 0; shake = 0; msgT = 0; lifesFound = 0;
   particles = [];
   feed = newFeed();
-  checkpoint = MAIN.checkpoint
-    ? { x: MAIN.checkpoint.c * TS, y: (MAIN.checkpoint.r + 1) * TS, active: false, spawnX: player.x, spawnY: player.y }
-    : { x: Infinity, y: 0, active: false, spawnX: player.x, spawnY: player.y };
+  // varios puntos de control por nivel: se reaparece en el último que se cruzó
+  checkpoint = { spawnX: player.x, spawnY: player.y,
+    flags: MAIN.checkpoints.map(c => ({ x: c.c * TS, y: (c.r + 1) * TS, active: false })) };
+  acorns = []; wind = { t: 5, dir: 1, phase: 'calm', strength: 0 };
   mother = MAIN.mother ? { x: MAIN.mother.c * TS, y: (MAIN.mother.r + 1) * TS, w: 50, h: 40, animT: 0 } : null;
   MAIN.kitten = MAIN.messenger ? { x: MAIN.messenger.c * TS + 16, y: (MAIN.messenger.r + 1) * TS, animT: 0 } : null;
   setupBoss(MAIN);
@@ -537,6 +580,7 @@ function respawn() {
   setArea(MAIN);
   player.x = checkpoint.spawnX; player.y = checkpoint.spawnY;
   player.vx = 0; player.vy = 0; player.invuln = 1.5; player.facing = 1; player.splashed = false; player.onMover = null;
+  acorns = [];
   hearts = 3;
   resetBossFight();
   snapCamera();
@@ -556,7 +600,12 @@ function doorUnderPlayer() {
 function tryDoor() {
   if (!player.onGround) return;
   const d = doorUnderPlayer();
-  if (!d) return;
+  if (!d) { // sin puerta: si está sobre un tablón (o tronco/hoja), lo atraviesa hacia abajo
+    const p = player, feetRow = Math.floor((p.y + p.h + 2) / TS);
+    const onPlank = [p.x + 4, p.x + p.w - 4].some(x => tile(Math.floor(x / TS), feetRow) === ONEWAY);
+    if (onPlank || p.onMover) { p.dropT = 0.22; p.onGround = false; p.onMover = null; p.y += 2; }
+    return;
+  }
   doorTo = d; doorT = 0; state = 'door'; SFX.door();
 }
 function updateDoor(dt) {
@@ -585,16 +634,30 @@ function updateMovers(dt) {
     const px = m.x, py = m.y;
     m.t += dt;
     const ph = m.t * Math.PI * 2 / m.period;
-    if (m.axis === 'x') m.x = m.x0 + Math.sin(ph) * m.amp;
+    if (m.leaf) updateLeaf(m, dt);
+    else if (m.axis === 'x') m.x = m.x0 + Math.sin(ph) * m.amp;
     else m.y = m.y0 - (1 - Math.cos(ph)) / 2 * m.amp;
     m.dx = m.x - px; m.dy = m.y - py;
     if (player.onMover === m && state === 'play') { moveX(player, m.dx); player.y += m.dy; }
   }
 }
+// Hoja gigante: si Simba se queda encima ~0,8 s empieza a temblar y luego se hunde;
+// reaparece flotando a los 2,4 s. El temblor y el oscurecimiento avisan antes de hundirse.
+const LEAF_STAND = 0.8, LEAF_SHAKE = 0.55, LEAF_UNDER = 2.4;
+function updateLeaf(m, dt) {
+  const L = m.leaf, on = player.onMover === m;
+  L.t += dt;
+  if (L.st === 'float') { m.y = m.y0 + Math.sin(m.t * 2.5) * 1.5; if (on) { L.stand += dt; if (L.stand > LEAF_STAND) { L.st = 'shake'; L.t = 0; } } else L.stand = Math.max(0, L.stand - dt * 0.5); }
+  else if (L.st === 'shake') { m.y = m.y0 + Math.sin(L.t * 60) * 1.2; if (L.t > LEAF_SHAKE) { L.st = 'sink'; L.t = 0; SFX.plop(); puff(m.x + m.w / 2, m.y0 + 4, 18, '#bff3ff', 90, 110, 0.6, 4); } }
+  else if (L.st === 'sink') { m.y = m.y0 + L.t * 90; m.solid = L.t < 0.12; if (L.t > 0.45) { L.st = 'under'; L.t = 0; } }
+  else if (L.st === 'under') { m.solid = false; m.y = m.y0 + 40; if (L.t > LEAF_UNDER) { L.st = 'rise'; L.t = 0; } }
+  else if (L.st === 'rise') { m.y = m.y0 + 40 - L.t / 0.4 * 40; if (L.t > 0.4) { L.st = 'float'; L.t = 0; L.stand = 0; m.solid = true; m.y = m.y0; puff(m.x + m.w / 2, m.y0 + 4, 6, '#bff3ff', 40, 40, 0.4, 3); } }
+}
 function landOnMovers(p) {
   p.onMover = null;
-  if (p.vy < 0) return;
+  if (p.vy < 0 || p.dropT > 0) return;
   for (const m of AR.moverObjs) {
+    if (!m.solid) continue;
     if (p.x + p.w > m.x + 4 && p.x < m.x + m.w - 4 && p.prevBottom <= m.y + 6 && p.y + p.h >= m.y) {
       p.y = m.y - p.h; p.vy = 0; p.onGround = true; p.onMover = m;
     }
@@ -613,6 +676,36 @@ function bounceMushrooms(p) {
     }
   }
 }
+// Géiseres: reposo 1,6 s → burbujas (aviso) 0,7 s → chorro 1,1 s que lanza a Simba
+const GEYSER_IDLE = 1.6, GEYSER_WARN = 0.7, GEYSER_JET = 1.1, GEYSER_H = 4.6 * TS;
+function updateGeysers(dt, p) {
+  for (const g of AR.geyserObjs) {
+    g.t = (g.t + dt) % (GEYSER_IDLE + GEYSER_WARN + GEYSER_JET);
+    const wasActive = g.active;
+    g.warn = g.t > GEYSER_IDLE && g.t <= GEYSER_IDLE + GEYSER_WARN;
+    g.active = g.t > GEYSER_IDLE + GEYSER_WARN;
+    if (g.active && !wasActive && Math.abs(g.x - (camX + VW / 2)) < VW) SFX.geyser();
+    if (g.warn && Math.random() < dt * 25) puff(g.x + (Math.random() - 0.5) * 16, g.y - 4, 1, '#d6f6ff', 10, 40, 0.4, 3);
+    if (g.active && overlap(p, { x: g.x - 14, y: g.y - GEYSER_H, w: 28, h: GEYSER_H })) {
+      p.vy = Math.min(p.vy, -680); p.spring = 0.35; p.onGround = false; p.coyote = 0;
+    }
+  }
+}
+// Viento de otoño: cada 6-9 s una ráfaga de 2,5 s empuja a Simba. Avisa 1 s antes (hojas + sonido + flecha).
+let wind = { t: 4, dir: 1, phase: 'calm', strength: 0 };
+function updateWind(dt, p) {
+  const cfg = seasonCfg(curSeason());
+  if (!cfg.wind || AR.isRoom) { wind.strength = 0; return; }
+  wind.t -= dt;
+  const bossBoost = boss && boss.final && arena && arena.active ? 1.6 : 1;
+  if (wind.phase === 'calm' && wind.t <= 0) { wind.phase = 'warn'; wind.t = 1; wind.dir = Math.random() < 0.5 ? -1 : 1; SFX.wind(); }
+  else if (wind.phase === 'warn' && wind.t <= 0) { wind.phase = 'gust'; wind.t = 2.5; }
+  else if (wind.phase === 'gust' && wind.t <= 0) { wind.phase = 'calm'; wind.t = 6 + Math.random() * 3; }
+  const target = wind.phase === 'gust' ? 1 : wind.phase === 'warn' ? 0.25 : 0;
+  wind.strength = lerp(wind.strength, target, Math.min(1, dt * 4));
+  if (state === 'play' && wind.strength > 0.05) moveX(p, wind.dir * 50 * bossBoost * wind.strength * dt); // se puede contrarrestar caminando
+}
+
 // Erizos: pinchan aunque se les salte encima (rebote hacia arriba para escapar)
 function touchUrchins(p) {
   for (const u of AR.urchinObjs) {
@@ -654,6 +747,7 @@ function updatePlayer(dt) {
   // Salto variable: soltar el botón corta la subida; flotación suave en el ápice
   let g = GRAV;
   p.spring = Math.max(0, (p.spring || 0) - dt);
+  p.dropT = Math.max(0, (p.dropT || 0) - dt);
   if (p.vy < 0 && !inJump() && p.spring <= 0) g *= 2.6;
   else if (Math.abs(p.vy) < 70 && inJump()) g *= 0.55;
   else if (p.vy > 0) g *= 1.15;
@@ -665,9 +759,11 @@ function updatePlayer(dt) {
   landOnMovers(p);
   bounceMushrooms(p);
   touchUrchins(p);
+  updateGeysers(dt, p);
+  updateWind(dt, p);
   if (state !== 'play') return;
   // salpicadura al caer al agua (verano)
-  if (seasonCfg(curSeason()).water && !AR.isRoom && !p.splashed && p.y + p.h > G * TS + 18) {
+  if (seasonCfg(curSeason()).water && !p.splashed && p.y + p.h > G * TS + 18 && tile(Math.floor((p.x + p.w / 2) / TS), G) === 0) {
     p.splashed = true; SFX.splash();
     puff(p.x + p.w / 2, G * TS + 18, 22, '#bff3ff', 80, 140, 0.6, 4);
   }
@@ -685,11 +781,12 @@ function updatePlayer(dt) {
   p.animT += dt;
 
   if (p.y > ROWS * TS + 40) { SFX.fall(); die(true); return; } // precipicio: se pierde una vida
-  if (!AR.isRoom && !checkpoint.active && p.x > checkpoint.x) {
-    checkpoint.active = true;
-    checkpoint.spawnX = checkpoint.x; checkpoint.spawnY = checkpoint.y - p.h;
+  if (!AR.isRoom) for (const f of checkpoint.flags) {
+    if (f.active || p.x <= f.x) continue;
+    f.active = true;
+    checkpoint.spawnX = f.x; checkpoint.spawnY = f.y - p.h;
     SFX.check(); flash(t('checkpoint'));
-    puff(checkpoint.x + 8, checkpoint.y - 60, 16, '#7cf27c', 80, 80, 0.7);
+    puff(f.x + 8, f.y - 60, 16, '#7cf27c', 80, 80, 0.7);
   }
 }
 
@@ -698,7 +795,31 @@ function updateEnemies(dt) {
   for (const e of AR.enemies) {
     e.animT += dt;
     if (!e.alive) { e.deadT += dt; continue; }
-    if (e.type === 'bat' || e.type === 'bee') {
+    if (e.type === 'squirrel') { // quieta: mira a Simba y le lanza bellotas si está cerca
+      e.facing = p.x < e.x ? -1 : 1;
+      const dist = Math.abs(p.x - e.x);
+      e.throwT -= dt;
+      if (e.throwT <= 0 && dist < 8 * TS && dist > 30 && Math.abs(p.y - e.y) < 5 * TS) {
+        e.throwT = 2.4 / (LV.diff || 1); e.throwAnim = 0.25;
+        throwAcorn(e.x + e.w / 2, e.y + 4, p, 0.85); SFX.squeak();
+      }
+    } else if (e.type === 'boar') { // camina despacio; si ve a Simba delante, embiste
+      const ahead = (p.x - e.x) * Math.sign(e.vx || -1), sameLevel = Math.abs((p.y + p.h) - (e.y + e.h)) < TS;
+      if (!e.charge && (e.cool || 0) <= 0 && ahead > 0 && ahead < 6 * TS && sameLevel) { e.charge = 0.15; SFX.snort(); }
+      e.cool = Math.max(0, (e.cool || 0) - dt);
+      if (e.charge) {
+        e.charge += dt;
+        if (e.charge > 0.5) e.vx = Math.sign(e.vx || -1) * 250 * (LV.diff || 1) * 0.8; else e.vx = Math.sign(e.vx || -1) * 1; // resopla y arranca
+        if (Math.random() < dt * 25) puff(e.x + e.w / 2, e.y + e.h, 1, '#e8dcc0', 20, 15, 0.3, 3);
+        if (e.charge > 2.4) { e.charge = 0; e.cool = 1.2; e.vx = Math.sign(e.vx) * e.speed; }
+      }
+      e.vy = Math.min(e.vy + GRAV * dt, MAXFALL);
+      moveX(e, e.vx * dt);
+      moveY(e, e.vy * dt);
+      const front = e.vx > 0 ? e.x + e.w + 2 : e.x - 2;
+      const ledge = e.onGround && tile(Math.floor(front / TS), Math.floor((e.y + e.h + 4) / TS)) === 0;
+      if (e.hitWall || ledge) { e.vx = (e.hitWall ? -e.hitWall : -Math.sign(e.vx || 1)) * e.speed; e.charge = 0; e.cool = 0.8; }
+    } else if (e.type === 'bat' || e.type === 'bee') {
       const nx = e.cx + Math.sin(e.animT * e.speed) * e.range;
       e.vx = (nx - e.x) / dt; e.x = nx;
       e.y = e.type === 'bee' ? e.baseY + Math.sin(e.animT * 2.2) * 26 : e.baseY + Math.sin(e.animT * 3.2) * 14;
@@ -802,7 +923,9 @@ function completeLevel() {
   clearInfo = { stars, fish: fishCount, total, lifes: lifesFound, time: timeT };
   state = 'clear'; clearT = 0; SFX.win();
 }
-function finishClear() { openMap(LV.index + 1 + WORLDS.indexOf(LV.world) * LEVELS_PER_WORLD); }
+// al superar un nivel, Simba camina en el mapa desde ese nivel hasta el siguiente
+const levelNodeIndex = lv => lv.index + WORLDS.indexOf(lv.world) * LEVELS_PER_WORLD;
+function finishClear() { openMap(levelNodeIndex(LV) + 1, levelNodeIndex(LV)); }
 
 // ---------------- Alimentar a mamá (fin de mundo) ----------------
 function startFeeding() {
@@ -814,8 +937,10 @@ function startFeeding() {
 function finishWorld() {
   const ratio = feed.fed / feed.total;
   recordLevel(LV.id, starsFor(ratio), fishCount);
-  SAVE.worldsDone = Object.assign(SAVE.worldsDone || {}, { [LV.world.id]: true }); writeSave();
-  openMap(SAVE.mapSel);
+  SAVE.worldsDone = Object.assign(SAVE.worldsDone || {}, { [LV.world.id]: true });
+  SAVE.mom = Object.assign(SAVE.mom || {}, { [LV.world.id]: Math.max((SAVE.mom || {})[LV.world.id] || 0, ratio) });
+  writeSave();
+  openMap(levelNodeIndex(LV) + 1, levelNodeIndex(LV)); // al mundo siguiente (si ya existe)
 }
 const momMouth = () => ({ x: mother.x + mother.w / 2 - 20, y: mother.y - 26 });
 function updateFeeding(dt, arrived) {
@@ -874,6 +999,7 @@ function update(dt) {
     updateAmbient(dt, curSeason());
     updateMovers(dt);
     updatePlayer(dt);
+    updateAcorns(dt);
     if (state === 'play') updateEnemies(dt);
     updateArena(dt);
     updateWorld(dt);
@@ -914,6 +1040,13 @@ function update(dt) {
     deadT += dt; updateParticles(dt);
   } else if (state === 'map') {
     updateMap(dt);
+  } else if (state === 'slots') {
+    updateSlots(dt);
+  }
+  savedFlashT = Math.max(0, savedFlashT - dt);
+  if (SAVE_SLOT >= 0 && !['menu', 'slots', 'settings', 'pause'].includes(state)) {
+    SAVE.playTime = (SAVE.playTime || 0) + dt;
+    autosaveT += dt; if (autosaveT > 20) { autosaveT = 0; writeSave(true); }
   }
 }
 
@@ -971,6 +1104,20 @@ let ambient = [];
 function updateAmbient(dt, season) {
   const kind = seasonCfg(season).ambient;
   if (AR && AR.isRoom) { ambient = []; return; }
+  if (kind === 'leaves') {
+    const COLORS = ['#e8792b', '#c94a1d', '#f2b134', '#a8501f'];
+    if (ambient.length < 46 && Math.random() < dt * (14 + wind.strength * 30)) {
+      const front = Math.random() < 0.2;
+      ambient.push({ k: 'leaf', front, x: Math.random() * (VW + 200) - 100, y: -10, vx: -10 + Math.random() * 20, vy: (front ? 40 : 22) + Math.random() * 20,
+        life: 14, ph: Math.random() * 6, rot: Math.random() * 6, size: front ? 5 : 3, color: COLORS[Math.floor(Math.random() * 4)] });
+    }
+    for (const a of ambient) {
+      a.x += (a.vx + wind.dir * wind.strength * (a.front ? 260 : 160)) * dt + Math.sin(a.ph) * 0.6;
+      a.y += a.vy * dt; a.ph += dt * 2; a.rot += dt * (2 + wind.strength * 6); a.life -= dt;
+    }
+    ambient = ambient.filter(a => a.life > 0 && a.y < VH + 10 && a.x > -120 && a.x < VW + 120);
+    return;
+  }
   if (ambient.length < 18 && Math.random() < dt * 6)
     ambient.push(kind === 'petals'
       ? { k: kind, x: Math.random() * VW, y: -6, vx: 10 + Math.random() * 20, vy: 18 + Math.random() * 16, life: 12, ph: Math.random() * 6 }
@@ -978,8 +1125,16 @@ function updateAmbient(dt, season) {
   for (const a of ambient) { a.x += a.vx * dt + Math.sin(a.ph + a.y * 0.05) * 0.3; a.y += a.vy * dt; a.life -= dt; a.ph += dt; }
   ambient = ambient.filter(a => a.life > 0 && a.y < VH + 10);
 }
-function drawAmbient() {
+function drawLeafParticle(a) {
+  ctx.save(); ctx.translate(Math.round(a.x), Math.round(a.y)); ctx.rotate(a.rot);
+  ctx.fillStyle = a.color; ctx.beginPath(); ctx.ellipse(0, 0, a.size, a.size * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(80,30,10,0.5)'; ctx.fillRect(-a.size, -0.5, a.size * 2, 1);
+  ctx.restore();
+}
+function drawAmbient(front = true) {
   for (const a of ambient) {
+    if (a.k === 'leaf') { if (a.front === front) drawLeafParticle(a); continue; }
+    if (!front) continue;
     if (a.k === 'petals') { ctx.fillStyle = 'rgba(255,183,213,0.9)'; ctx.fillRect(Math.round(a.x), Math.round(a.y), 3, 2); }
     else {
       const al = Math.sin(clamp(a.life / 1.6, 0, 1) * Math.PI);
@@ -1017,10 +1172,12 @@ function drawAbyss(cy) {
 }
 
 // Agua en los precipicios (verano): superficie con olas animadas y fondo profundo
-function drawWater(cy) {
+function drawWater(cy, cave) {
   const top = G * TS - cy + 18;
   const g = ctx.createLinearGradient(0, top, 0, VH);
-  g.addColorStop(0, '#3fd0e0'); g.addColorStop(0.35, '#1c8fb0'); g.addColorStop(1, '#0b4a6b');
+  if (cave) { g.addColorStop(0, '#2a6f9a'); g.addColorStop(0.4, '#123c5c'); g.addColorStop(1, '#06182a'); }
+  else if (curSeason() === 'autumn') { g.addColorStop(0, '#5aa7c9'); g.addColorStop(0.35, '#2d6f93'); g.addColorStop(1, '#14344f'); }
+  else { g.addColorStop(0, '#3fd0e0'); g.addColorStop(0.35, '#1c8fb0'); g.addColorStop(1, '#0b4a6b'); }
   ctx.fillStyle = g; ctx.fillRect(0, top, VW, VH - top);
   ctx.fillStyle = 'rgba(255,255,255,0.75)';
   for (let x = 0; x < VW; x += 4) {
@@ -1158,8 +1315,12 @@ function drawDoorPrompt(cx, cy) {
 }
 
 function drawCheckpoint(cx, cy) {
-  if (!isFinite(checkpoint.x) || AR.isRoom) return;
+  if (AR.isRoom) return;
+  for (const f of checkpoint.flags) drawFlag(f, cx, cy);
+}
+function drawFlag(checkpoint, cx, cy) {
   const x = Math.round(checkpoint.x - cx), y = checkpoint.y - cy;
+  if (x < -40 || x > VW + 40) return;
   ctx.fillStyle = '#5b5b5b'; ctx.fillRect(x, y - 64, 4, 64);
   ctx.fillStyle = '#3a3a3a'; ctx.fillRect(x - 3, y - 4, 10, 4);
   const wave = Math.sin(timeT * 6) * 2;
@@ -1225,12 +1386,19 @@ function drawEnemy(e, cx, cy) {
   } else if (e.type === 'bee') {
     const buzz = e.alive ? Math.sin(e.animT * 40) * 1 : 0; // zumbido
     if (drawFrame(A.bee, fx, fy + buzz, e.vx > 0, 1, sy, alpha)) return;
+  } else if (e.type === 'squirrel') {
+    e.throwAnim = Math.max(0, (e.throwAnim || 0) - 1 / 60);
+    const sq = e.throwAnim > 0 ? 0.9 : 1 + Math.sin(e.animT * 3) * 0.02;
+    if (drawFrame(A.squirrel, fx, fy, e.facing > 0, 2 - sq, sq * sy, alpha)) return;
+  } else if (e.type === 'boar') {
+    const bob = e.alive ? Math.abs(Math.sin(e.animT * (e.charge > 0.5 ? 18 : 8))) * 2 : 0;
+    if (drawFrame(A.boar, fx, fy - bob, e.vx > 0, 1, sy, alpha)) return;
   } else if (e.type === 'crab') {
     const bob = e.alive ? Math.abs(Math.sin(e.animT * 16)) * 2 : 0; // patitas rápidas
     if (drawFrame(A.crab, fx, fy - bob, false, 1, sy, alpha)) return;
   }
   ctx.globalAlpha = alpha;
-  ctx.fillStyle = { dog: '#8b5a2b', bat: '#7b3fa0', bee: '#f2c641', crab: '#d64933' }[e.type] || '#777';
+  ctx.fillStyle = { dog: '#8b5a2b', bat: '#7b3fa0', bee: '#f2c641', crab: '#d64933', squirrel: '#c0582b', boar: '#6b4a2f' }[e.type] || '#777';
   ctx.fillRect(Math.round(fx - e.w / 2), Math.round(fy - e.h * sy), e.w, e.h * sy);
   ctx.globalAlpha = 1;
 }
@@ -1247,11 +1415,65 @@ function drawUrchin(u, cx, cy) {
   if (drawFrame(A.urchin, x, y, false, pulse, pulse)) return;
   ctx.fillStyle = '#7b3fa0'; ctx.beginPath(); ctx.arc(x, y - 12, 12, 0, Math.PI * 2); ctx.fill();
 }
+function drawGeyser(g, cx, cy) {
+  const x = g.x - cx, y = g.y - cy;
+  if (x < -40 || x > VW + 40) return;
+  ctx.fillStyle = '#4a3a30'; ctx.beginPath(); ctx.ellipse(x, y - 2, 15, 5, 0, 0, Math.PI * 2); ctx.fill(); // boca de roca
+  ctx.fillStyle = '#1d3a4a'; ctx.beginPath(); ctx.ellipse(x, y - 3, 9, 3, 0, 0, Math.PI * 2); ctx.fill();
+  if (!g.active) return;
+  const k = clamp((g.t - GEYSER_IDLE - GEYSER_WARN) / 0.15, 0, 1), h = GEYSER_H * k;
+  const grd = ctx.createLinearGradient(0, y - h, 0, y);
+  grd.addColorStop(0, 'rgba(230,250,255,0.95)'); grd.addColorStop(1, 'rgba(120,210,240,0.85)');
+  ctx.fillStyle = grd;
+  ctx.beginPath(); ctx.moveTo(x - 9, y);
+  for (let yy = 0; yy <= h; yy += 8) ctx.lineTo(x - 9 - Math.sin(yy * 0.2 + menuT * 20) * 3 - yy * 0.02, y - yy);
+  for (let yy = h; yy >= 0; yy -= 8) ctx.lineTo(x + 9 + Math.sin(yy * 0.2 + menuT * 20 + 1) * 3 + yy * 0.02, y - yy);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  for (let i = 0; i < 6; i++) { const a = menuT * 9 + i; ctx.beginPath(); ctx.arc(x + Math.sin(a) * 12, y - h + Math.cos(a * 1.3) * 6, 4, 0, Math.PI * 2); ctx.fill(); }
+}
 function drawMover(m, cx, cy) {
+  if (m.leaf) return drawLeafRaft(m, cx, cy);
   const x = m.x + m.w / 2 - cx, y = m.y - cy + 20 + Math.sin(m.t * 3) * 1; // flota un poco
   if (drawFrame(A.log, x, y, false)) return;
   ctx.fillStyle = '#8a5a2b'; ctx.fillRect(Math.round(m.x - cx), Math.round(m.y - cy), m.w, m.h);
   ctx.fillStyle = '#c98a45'; ctx.fillRect(Math.round(m.x - cx), Math.round(m.y - cy), m.w, 3);
+}
+
+function drawLeafRaft(m, cx, cy) {
+  const L = m.leaf, x = m.x + m.w / 2 - cx, y = m.y - cy + 18;
+  if (L.st === 'under') return;
+  const warn = L.st === 'shake' || (L.st === 'float' && L.stand > LEAF_STAND * 0.5);
+  const alpha = L.st === 'sink' ? 1 - L.t / 0.45 : L.st === 'rise' ? L.t / 0.4 : 1;
+  if (!drawFrame(A.leafRaft, x, y, false, 1, 1, alpha)) {
+    ctx.globalAlpha = alpha; ctx.fillStyle = '#e8792b'; ctx.beginPath(); ctx.ellipse(x, y - 6, m.w / 2, 7, 0, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+  }
+  if (warn) { ctx.fillStyle = 'rgba(60,20,0,0.25)'; ctx.beginPath(); ctx.ellipse(x, y - 7, m.w / 2 - 4, 6, 0, 0, Math.PI * 2); ctx.fill(); } // se oscurece: va a hundirse
+}
+// Rayos de sol dorado (otoño)
+function drawSunrays() {
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 4; i++) {
+    const x = 120 + i * 150 + Math.sin(menuT * 0.3 + i) * 20;
+    const g = ctx.createLinearGradient(x, 0, x - 160, VH);
+    g.addColorStop(0, 'rgba(255,220,140,0.16)'); g.addColorStop(1, 'rgba(255,220,140,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.moveTo(x - 18, 0); ctx.lineTo(x + 18, 0); ctx.lineTo(x - 140, VH); ctx.lineTo(x - 210, VH); ctx.fill();
+  }
+  ctx.restore();
+}
+// Flecha que avisa de una ráfaga de viento
+function drawWindHint() {
+  if (wind.phase === 'calm' || AR.isRoom || !seasonCfg(curSeason()).wind) return;
+  const a = wind.phase === 'warn' ? 0.5 + Math.sin(menuT * 18) * 0.5 : 0.8;
+  const x = wind.dir > 0 ? VW - 40 : 40, y = 70;
+  ctx.globalAlpha = a; ctx.fillStyle = '#fff3d6';
+  for (let i = 0; i < 3; i++) {
+    const ox = (i - 1) * 9 * wind.dir;
+    ctx.beginPath(); ctx.moveTo(x + ox + wind.dir * 8, y); ctx.lineTo(x + ox - wind.dir * 4, y - 8); ctx.lineTo(x + ox - wind.dir * 4, y + 8); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
 }
 
 // Gatito mensajero: sentado, con un "!" encima hasta que Simba llega
@@ -1261,7 +1483,9 @@ function drawKitten(cx, cy) {
   const fx = k.x - cx, fy = k.y - cy + 2;
   const sit = anim(A.kitten, 'sit') || anim(A.kitten, 'idle');
   groundShadow(fx, fy - 2, 14);
-  if (LV.world.messenger === 'turtle') {
+  if (LV.world.messenger === 'hedgehog') {
+    if (!drawFrame(A.hedgehog, fx, fy, false)) { ctx.fillStyle = '#8a6a4a'; ctx.fillRect(Math.round(fx - 14), Math.round(fy - 18), 28, 18); }
+  } else if (LV.world.messenger === 'turtle') {
     if (!drawFrame(A.turtle, fx, fy + Math.abs(Math.sin(k.animT * 2)) * -1, false)) { ctx.fillStyle = '#4caf50'; ctx.fillRect(Math.round(fx - 16), Math.round(fy - 20), 32, 20); }
   } else if (!(sit && drawFrame(frameAt(sit, k.animT, 5), fx, fy, true))) {
     ctx.fillStyle = '#f2a65a'; ctx.fillRect(Math.round(fx - 12), Math.round(fy - 22), 24, 22);
@@ -1380,8 +1604,14 @@ function drawGameScene() {
   const sx = shaking ? (Math.random() - 0.5) * shake : 0;
   const sy = shaking ? (Math.random() - 0.5) * shake : 0;
   const cx = Math.round(camX + sx), cy = Math.round(camY + sy);
-  if (AR.isRoom) drawRoomBackground(cx);
-  else { drawBackground(cx, G * TS - cy, curSeason()); drawAbyss(cy); }
+  const cfgS = seasonCfg(curSeason());
+  if (AR.isRoom) { drawRoomBackground(cx); if (cfgS.water) drawWater(cy, true); }
+  else {
+    drawBackground(cx, G * TS - cy, curSeason());
+    if (cfgS.sunrays) drawSunrays();
+    drawAmbient(false); // hojas lejanas, detrás del escenario
+    drawAbyss(cy);
+  }
   for (const m of AR.moverObjs) drawMover(m, cx, cy);
   drawTiles(cx, cy);
   if (AR.isRoom) { ctx.fillStyle = AR.style === 'tree' ? 'rgba(60,30,10,0.4)' : 'rgba(20,16,60,0.45)'; ctx.fillRect(0, 0, VW, VH); } // penumbra de la sala
@@ -1392,13 +1622,16 @@ function drawGameScene() {
   for (const o of AR.oneups) drawOneup(o, cx, cy);
   for (const mu of AR.mushroomObjs) drawMushroom(mu, cx, cy);
   for (const u of AR.urchinObjs) drawUrchin(u, cx, cy);
+  for (const g of AR.geyserObjs) drawGeyser(g, cx, cy);
   drawKitten(cx, cy);
   drawMother(cx, cy);
   if (!AR.isRoom) drawBoss(cx, cy);
   for (const e of AR.enemies) drawEnemy(e, cx, cy);
   drawPlayer(cx, cy);
+  drawAcorns(cx, cy);
   drawParticles(cx, cy);
-  drawAmbient();
+  drawAmbient(true);
+  drawWindHint();
   drawDoorPrompt(cx, cy);
   drawHUD();
   if (state === 'talk') drawTalk(cx, cy);
@@ -1410,12 +1643,14 @@ function render(dt) {
   ctx.imageSmoothingEnabled = false;
   hitRects = [];
   // Menú principal (y ajustes abiertos desde él): escena animada propia
-  if (state === 'menu' || (state === 'settings' && settingsFrom === 'menu')) {
+  if (state === 'menu' || state === 'slots' || (state === 'settings' && settingsFrom === 'menu')) {
     drawMenuScene(dt);
-    if (state === 'menu') drawMainMenu(); else { overlay(0.25); drawSettings(); }
+    if (state === 'menu') drawMainMenu();
+    else if (state === 'slots') { overlay(0.3); drawSlots(); }
+    else { overlay(0.25); drawSettings(); }
     return;
   }
-  if (state === 'map' || (state === 'settings' && settingsFrom === 'map')) { drawMap(); if (state === 'settings') { overlay(0.5); drawSettings(); } return; }
+  if (state === 'map' || (state === 'settings' && settingsFrom === 'map')) { drawMap(); if (state === 'settings') { overlay(0.5); drawSettings(); } drawSavedBadge(); return; }
   if (state === 'intro') { drawIntro(); return; }
   if (state === 'gameover') { drawGameOver(); return; }
   drawGameScene();
@@ -1423,6 +1658,16 @@ function render(dt) {
   if (state === 'settings') { overlay(0.55); drawSettings(); }
   if (state === 'clear') drawLevelClear();
   if (state === 'win' && feed.phase === 'done' && feed.doneT > 0.6) drawResults();
+  drawSavedBadge();
+}
+function drawSavedBadge() {
+  if (savedFlashT <= 0 || SAVE_SLOT < 0) return;
+  ctx.globalAlpha = Math.min(1, savedFlashT * 2);
+  const x = VW - 96, y = VH - 22;
+  pixRect(x - 2, y - 2, 88, 18, '#1b1b2f'); pixRect(x, y, 84, 14, 'rgba(36,38,82,0.92)');
+  ctx.strokeStyle = '#7cf2c4'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x + 7, y + 7); ctx.lineTo(x + 10, y + 10); ctx.lineTo(x + 16, y + 4); ctx.stroke();
+  text(t('saved'), x + 22, y + 8, 7, '#7cf2c4', 'left');
+  ctx.globalAlpha = 1;
 }
 
 // ---------------- Loop ----------------

@@ -178,8 +178,33 @@ for name, im_def in SRC.get("images", {}).items():
 
 # ---- Tilesets Wang de esquinas (uno por estación) ----
 # wang_N: bits SE=1, SW=2, NE=4, NW=8 marcan esquinas "upper" (vacías); "lower" = tierra.
+def recolor_autumn(sheet):
+    """Césped verde -> hojas secas (naranja, rojo, amarillo); tierra un poco más cálida."""
+    out = sheet.copy(); px = out.load()
+    LEAF = [[(110, 38, 18), (190, 74, 28), (240, 140, 50)],   # naranja
+            [(96, 24, 20), (170, 46, 30), (225, 88, 52)],     # rojo
+            [(120, 70, 18), (205, 140, 40), (245, 200, 80)]]  # amarillo
+    for y in range(out.height):
+        for x in range(out.width):
+            r, g, b, a = px[x, y]
+            if a == 0: continue
+            lum = (0.3 * r + 0.59 * g + 0.11 * b) / 255
+            if g > r + 12 and g > b:                          # verde: hierba
+                pal = LEAF[((x // 3) * 7 + (y // 2) * 13) % 3]  # manchas de hojas de distinto color
+                k = 0 if lum < 0.35 else 1 if lum < 0.6 else 2
+                px[x, y] = pal[k] + (a,)
+            else:                                             # tierra: más cálida y algo más oscura
+                px[x, y] = (min(255, int(r * 0.92 + 8)), int(g * 0.8), int(b * 0.7), a)
+    return out
+
+
 for key, ts in SRC.get("tilesets", {}).items():
-    sheet = Image.open(os.path.join(HERE, ts["image"])).convert("RGBA")
+    if ts.get("recolor_from"):
+        base = SRC["tilesets"][ts["recolor_from"]]
+        sheet = recolor_autumn(Image.open(os.path.join(HERE, base["image"])).convert("RGBA"))
+        ts = dict(base, **{k: v for k, v in ts.items() if k != "image"})
+    else:
+        sheet = Image.open(os.path.join(HERE, ts["image"])).convert("RGBA")
     meta = json.load(open(os.path.join(HERE, ts["meta"]), encoding="utf-8"))
     manifest[key] = {}
     for t in meta["tileset_data"]["tiles"]:

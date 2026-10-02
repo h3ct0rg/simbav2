@@ -16,35 +16,44 @@
   canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
 
   /* ---------- Controles táctiles (solo pantallas táctiles en horizontal) ---------- */
+  /* Separados de las esquinas (bordes curvos, muesca y barra de gestos del móvil) y con
+     tamaño proporcional a la pantalla, para que se alcancen bien sin tapar el juego. */
+  :root {
+    --ctl-x: max(56px, 7vw);    /* distancia al borde lateral */
+    --ctl-y: max(34px, 9vh);    /* distancia al borde inferior */
+    --joy: clamp(112px, 30vh, 140px);
+    --jump: clamp(84px, 24vh, 104px);
+  }
   .ctl { position: fixed; z-index: 2; display: none; }
   #t-jump {
-    right: calc(28px + env(safe-area-inset-right)); bottom: 28px;
-    width: 92px; height: 92px; border-radius: 50%;
-    border: 3px solid rgba(255,255,255,.55); background: rgba(255,255,255,.16); color: #fff;
+    right: calc(var(--ctl-x) + env(safe-area-inset-right)); bottom: calc(var(--ctl-y) + env(safe-area-inset-bottom));
+    width: var(--jump); height: var(--jump); border-radius: 50%;
+    border: 3px solid rgba(255,255,255,.5); background: rgba(255,255,255,.13); color: #fff;
     font: 11px "Press Start 2P", monospace; text-shadow: 2px 2px #1b1b2f;
     display: none; align-items: center; justify-content: center; flex-direction: column; gap: 6px;
   }
   #t-jump .arrow { font-size: 26px; line-height: 1; }
-  #t-jump.on { background: rgba(255,255,255,.4); transform: scale(.94); }
+  #t-jump.on { background: rgba(255,255,255,.38); transform: scale(.94); }
   #joy {
-    left: calc(28px + env(safe-area-inset-left)); bottom: 24px;
-    width: 128px; height: 128px; border-radius: 50%;
-    border: 3px solid rgba(255,255,255,.45); background: rgba(255,255,255,.10);
+    left: calc(var(--ctl-x) + env(safe-area-inset-left)); bottom: calc(var(--ctl-y) + env(safe-area-inset-bottom));
+    width: var(--joy); height: var(--joy); border-radius: 50%;
+    border: 3px solid rgba(255,255,255,.4); background: rgba(255,255,255,.08);
   }
   #joy::before, #joy::after { /* flechitas guía */
     content: '◀'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
-    color: rgba(255,255,255,.5); font-size: 14px;
+    color: rgba(255,255,255,.45); font-size: 14px;
   }
   #joy::after { content: '▶'; left: auto; right: 10px; }
   #knob {
-    position: absolute; left: 50%; top: 50%; width: 58px; height: 58px; border-radius: 50%;
+    position: absolute; left: 50%; top: 50%; width: 45%; height: 45%; border-radius: 50%;
     transform: translate(-50%, -50%);
     background: radial-gradient(circle at 35% 30%, #ffffff, #bfe3ff 55%, #7aa7d6);
     border: 3px solid rgba(27,27,47,.6); box-shadow: 0 3px 8px rgba(0,0,0,.35);
   }
   #joy.on #knob { background: radial-gradient(circle at 35% 30%, #ffffff, #d6efff 55%, #9cc4ec); }
   #t-pause {
-    top: 52px; right: calc(12px + env(safe-area-inset-right)); width: 40px; height: 40px; border-radius: 10px;
+    top: calc(max(46px, 12vh) + env(safe-area-inset-top)); right: calc(max(18px, 3vw) + env(safe-area-inset-right));
+    width: 40px; height: 40px; border-radius: 10px;
     border: 2px solid rgba(255,255,255,.45); background: rgba(0,0,0,.25); color: #fff; font: bold 16px monospace;
   }
   @media (orientation: landscape) {
@@ -104,13 +113,14 @@
 </div>
 
 <!-- ?v=N: súbelo al publicar cambios para que el navegador no use versiones en caché -->
-<script src="../sprites/manifest.js?v=14"></script>
-<script src="settings.js?v=14"></script>
-<script src="save.js?v=14"></script>
-<script src="levels.js?v=14"></script>
-<script src="menu.js?v=14"></script>
-<script src="screens.js?v=14"></script>
-<script src="boss.js?v=14"></script>
-<script src="game.js?v=14"></script>
+<script src="../sprites/manifest.js?v=27"></script>
+<script src="settings.js?v=27"></script>
+<script src="save.js?v=27"></script>
+<script src="stats.js?v=27"></script>
+<script src="levels.js?v=27"></script>
+<script src="menu.js?v=27"></script>
+<script src="screens.js?v=27"></script>
+<script src="boss.js?v=27"></script>
+<script src="game.js?v=27"></script>
 </body>
 </html>

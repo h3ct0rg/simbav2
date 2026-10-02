@@ -19,6 +19,12 @@ para la izquierda se espejan en código.
 | `turtle/` | Tortu, mensajero del mundo 2 | 46×48 | imagen |
 | `mushroom/`, `log/` | Hongo saltarín y tronco-balsa móvil | 48×54, 80×19 | imágenes |
 | `boss_crab/` | **Don Pinzas**: `idle`, `slam` (8f, con `animate_image`), `stuck` | 104×83 | animación de imagen |
+| `bg_autumn/` | Fondo de otoño: lago y gran sol dorado | 400×224 | imagen |
+| `tiles_autumn/` | Tileset de otoño: **el de primavera recoloreado** (hojas secas). El generado salió con fondo opaco | 32×32 | recolor |
+| `squirrel/`, `boar/` | Enemigos de otoño: ardilla lanzadora y jabalí | ~56×52 | imágenes |
+| `hedgehog/` | Pincho, mensajero del mundo 3 | 46×49 | imagen |
+| `leaf_raft/` | Hoja gigante flotante (se hunde) | 80×25 | imagen |
+| `boss_squirrel/`, `boss_squirrel_eat/` | **Doña Bellota** y su animación de comerse la bellota dorada (8f, `animate_image`) | 86×77 | imagen + animación |
 | `dog/` | Bulldog enemigo: `walk` (6f) | 70×44 | personaje `ec152885-a328-4486-a0f4-fd3758893b74` |
 | `bat/` | Murciélago enemigo (estático) | 56×38 | imagen `495be581-…` |
 | `rat/` | Rata enemiga (estática, mira a la derecha) | 54×29 | imagen `9166e9b0-…` |
@@ -43,7 +49,8 @@ PIXELLAB_KEY=tu-api-key python gen_world1.py   # ejemplo: genera el arte del Mun
 
 ## Otras herramientas
 - `crab_pose.py`: intento de crear por código la pose de pinzas abajo (descartado: se usó `animate_image`).
-- `gen_world2.py`: genera el arte del Mundo 2 (`PIXELLAB_KEY=... python gen_world2.py`).
+- `gen_world2.py` / `gen_world3.py`: generan el arte de los mundos 2 y 3 (`PIXELLAB_KEY=... python gen_world3.py`).
+- `recolor_from` en `tilesets` (sources.json): crea un tileset recoloreando otro (usado en otoño).
 - `frame_sets` en `sources.json`: animaciones hechas con `animate_image` a partir de frames ya descargados en `raw/`.
 
 ## Añadir más sprites
