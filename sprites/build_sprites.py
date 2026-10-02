@@ -51,6 +51,57 @@ def snap_palette(im, ref):
     return out
 
 
+def key_background(im, tol=14):
+    """Quita un fondo liso (el color de la esquina) por relleno desde los bordes."""
+    from collections import deque
+    im = im.copy(); px = im.load(); W, H = im.size
+    bg = px[0, 0]
+    seen = bytearray(W * H)
+    q = deque([(x, y) for x in range(W) for y in (0, H - 1)] + [(x, y) for y in range(H) for x in (0, W - 1)])
+    while q:
+        x, y = q.popleft()
+        if not (0 <= x < W and 0 <= y < H) or seen[y * W + x]: continue
+        seen[y * W + x] = 1
+        p = px[x, y]
+        if p[3] and sum(abs(p[i] - bg[i]) for i in range(3)) > tol: continue
+        px[x, y] = (0, 0, 0, 0)
+        q.extend([(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)])
+    return im
+
+
+def find_lights(im, kinds=("color",)):
+    """Puntos de luz para hacerlos titilar en el juego: grupos de píxeles muy saturados
+    (bombillas, adornos) o cálidos y brillantes (ventanas). Devuelve [[x, y, "#rrggbb", tamaño]]."""
+    import colorsys
+    W, H = im.size; px = im.load()
+    mask = {}
+    for y in range(H):
+        for x in range(W):
+            r, g, b, a = px[x, y]
+            if a < 200: continue
+            h, s, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
+            hue = h * 360
+            if "color" in kinds and s > 0.55 and v > 0.6 and not (75 < hue < 165):   # no el verde del pino
+                mask[(x, y)] = (r, g, b)
+            elif "warm" in kinds and s > 0.35 and v > 0.85 and 35 < hue < 65:          # ventanas amarillas
+                mask[(x, y)] = (r, g, b)
+    out, seen = [], set()
+    for k in mask:
+        if k in seen: continue
+        stack, comp = [k], []
+        seen.add(k)
+        while stack:
+            c = stack.pop(); comp.append(c)
+            for d in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                n = (c[0] + d[0], c[1] + d[1])
+                if n in mask and n not in seen: seen.add(n); stack.append(n)
+        if len(comp) < 2: continue
+        cx = sum(c[0] for c in comp) / len(comp); cy = sum(c[1] for c in comp) / len(comp)
+        col = max((mask[c] for c in comp), key=lambda c: sum(c))
+        out.append([round(cx, 1), round(cy, 1), "#%02x%02x%02x" % col, len(comp)])
+    return out
+
+
 def rel(p):
     return os.path.relpath(p, HERE).replace("\\", "/")
 
@@ -170,11 +221,32 @@ for name, im_def in SRC.get("images", {}).items():
         manifest[name] = paths
         print(f"{name}: {len(paths)} variantes")
         continue
+    if im_def.get("key_bg"):
+        im = key_background(im)
     if im_def.get("crop", True):
         im = im.crop(im.getbbox())
     im.save(out)
     manifest[name] = rel(out)
+    if im_def.get("lights"):  # posiciones (ya recortadas) de las luces que titilan
+        manifest[name + "_lights"] = find_lights(im, tuple(im_def["lights"]))
     print(f"{name}: {im.size}")
+
+# ---- Recortes: parte de una imagen con un color quitado (p. ej. el vidrio de la ventana del salón,
+#      para dibujar a los lobos DETRÁS del marco y de la nieve del alféizar) ----
+def is_glass(p):
+    r, g, b, a = p
+    return b > r + 25 and b > g + 10 and (r + g + b) / 3 < 120
+
+for name, cd in SRC.get("cutouts", {}).items():
+    base = Image.open(os.path.join(HERE, name.split("_")[0], name.split("_")[0] + ".png")).convert("RGBA") if not cd.get("from") else         Image.open(os.path.join(HERE, cd["from"], cd["from"] + ".png")).convert("RGBA")
+    im = base.crop(tuple(cd["box"]))
+    im.putdata([(0, 0, 0, 0) if is_glass(p) else p for p in im.getdata()])
+    out = os.path.join(HERE, name, name + ".png")
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    im.save(out)
+    manifest[name] = rel(out)
+    manifest[name + "_box"] = cd["box"]
+    print(f"{name}: recorte {cd['box']}")
 
 # ---- Tilesets Wang de esquinas (uno por estación) ----
 # wang_N: bits SE=1, SW=2, NE=4, NW=8 marcan esquinas "upper" (vacías); "lower" = tierra.
@@ -198,10 +270,29 @@ def recolor_autumn(sheet):
     return out
 
 
+def recolor_winter(sheet):
+    """Césped verde -> nieve (blanco azulado con sombras lilas); tierra -> tierra helada azul violácea."""
+    out = sheet.copy(); px = out.load()
+    SNOW = [(150, 160, 205), (205, 215, 240), (244, 248, 255)]
+    for y in range(out.height):
+        for x in range(out.width):
+            r, g, b, a = px[x, y]
+            if a == 0: continue
+            lum = (0.3 * r + 0.59 * g + 0.11 * b) / 255
+            if g > r + 12 and g > b:                          # hierba -> nieve
+                k = 0 if lum < 0.3 else 1 if lum < 0.5 else 2
+                px[x, y] = SNOW[k] + (a,)
+            else:                                             # tierra -> helada
+                v = lum
+                px[x, y] = (int(40 + v * 120), int(42 + v * 115), int(80 + v * 150), a)
+    return out
+
+
+RECOLOR = {"autumn": recolor_autumn, "winter": recolor_winter}
 for key, ts in SRC.get("tilesets", {}).items():
     if ts.get("recolor_from"):
         base = SRC["tilesets"][ts["recolor_from"]]
-        sheet = recolor_autumn(Image.open(os.path.join(HERE, base["image"])).convert("RGBA"))
+        sheet = RECOLOR[ts.get("style", "autumn")](Image.open(os.path.join(HERE, base["image"])).convert("RGBA"))
         ts = dict(base, **{k: v for k, v in ts.items() if k != "image"})
     else:
         sheet = Image.open(os.path.join(HERE, ts["image"])).convert("RGBA")

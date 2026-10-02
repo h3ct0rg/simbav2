@@ -5,7 +5,7 @@ para la izquierda se espejan en código.
 
 | Carpeta | Contenido | Tamaño recortado | PixelLab ID |
 |---|---|---|---|
-| `hero/` | Simba, gato blanco ojos azules: `idle` (8f), `run` (8f, modo v3), `jump` (8f) | 80×65 | personaje `9cf92fa4-8c5e-47a5-95e2-ff432540f02d` |
+| `hero/` | Simba, gato blanco ojos azules: `idle` (8f), `run` (8f, modo v3), `jump` (8f), `lying` (10f, echado, para el final) | 80×65 | personaje `9cf92fa4-8c5e-47a5-95e2-ff432540f02d` |
 | `mother/` | Mamá gata gris peluda: `idle` (8f) | 66×46 | personaje `71c92b45-c37a-4963-bb07-3260db4f075e` |
 | `mother_thin/` | Mamá flaquita (estática), con colores ajustados a la paleta de `mother/` mediante `palette_from` | 58×47 | imagen `27e44334-…` |
 | `bruto/` | **Bruto**, jefe bulldog del Mundo 1: `charge` (6f), `bark` (6f), `idle` (pose fija) | 148×98 | personaje `b040deee-3a25-4524-9e26-462f8c4b1a87` |
@@ -25,6 +25,19 @@ para la izquierda se espejan en código.
 | `hedgehog/` | Pincho, mensajero del mundo 3 | 46×49 | imagen |
 | `leaf_raft/` | Hoja gigante flotante (se hunde) | 80×25 | imagen |
 | `boss_squirrel/`, `boss_squirrel_eat/` | **Doña Bellota** y su animación de comerse la bellota dorada (8f, `animate_image`) | 86×77 | imagen + animación |
+| `bg_winter/` | Fondo de invierno: montañas nevadas al atardecer | 400×224 | imagen |
+| `village/` | Pueblo navideño (capa de fondo; sus luces se detectan y titilan) | 387×96 | imagen, fondo quitado con `key_bg` |
+| `tiles_winter/` | Tileset de invierno: **el de primavera recoloreado** (nieve sobre tierra helada). El generado salió como ladrillos de hielo | 32×32 | recolor |
+| `xmas_tree/`, `candy_cane/`, `gifts/`, `lamp/` | Decoración navideña colocada sola sobre el suelo | ~52×82 | imágenes |
+| `thin_ice/`, `icicle/` | Hielo fino y carámbano | 80×19, 16×60 | imágenes |
+| `sleigh/`, `sleigh_fly/` | Trineo de Papá Noel volando (9f, `animate_image`) | 80×37 | imagen + animación |
+| `snowman/`, `snowman_throw/` | Muñeco de nieve y su lanzamiento (6f, `animate_image`) | 50×48 | imagen + animación |
+| `penguin/` | Pingüino que se desliza | 50×41 | imagen |
+| `elf/`, `elf_wave/` | Cascabel, el duende mensajero del mundo 4 | 27×46 | imagen + animación |
+| `wolf/` | **Lobo de las Nieves**: `idle`, `run` (6f), `howl` (6f, v3), `sad` (4f, v3) | 172×115 | personaje (cuenta 2) |
+| `cub/` | Cachorro de lobo: `idle`, `run` (6f) | 62×40 | personaje (cuenta 2) |
+| `house/`, `interior/` | Casita navideña y su salón (final) | 160×160, 400×224 | imágenes |
+| `mom_lying/` | Mamá echada (final), img2img desde su rotación | — | imagen |
 | `dog/` | Bulldog enemigo: `walk` (6f) | 70×44 | personaje `ec152885-a328-4486-a0f4-fd3758893b74` |
 | `bat/` | Murciélago enemigo (estático) | 56×38 | imagen `495be581-…` |
 | `rat/` | Rata enemiga (estática, mira a la derecha) | 54×29 | imagen `9166e9b0-…` |
@@ -50,7 +63,9 @@ PIXELLAB_KEY=tu-api-key python gen_world1.py   # ejemplo: genera el arte del Mun
 ## Otras herramientas
 - `crab_pose.py`: intento de crear por código la pose de pinzas abajo (descartado: se usó `animate_image`).
 - `gen_world2.py` / `gen_world3.py`: generan el arte de los mundos 2 y 3 (`PIXELLAB_KEY=... python gen_world3.py`).
-- `recolor_from` en `tilesets` (sources.json): crea un tileset recoloreando otro (usado en otoño).
+- `gen_world4.py`: genera el arte del Mundo 4; `add_world4_sources.py` lo añade a `sources.json` y `fetch_frames.py` descarga los frames de un `animate_image`.
+- `recolor_from` en `tilesets` (sources.json): crea un tileset recoloreando otro (`style`: `autumn` u `winter`).
+- `key_bg` en `images`: quita un fondo liso generado por error; `lights`: detecta bombillas, adornos y ventanas para que titilen en el juego (`<nombre>_lights` en el manifest).
 - `frame_sets` en `sources.json`: animaciones hechas con `animate_image` a partir de frames ya descargados en `raw/`.
 
 ## Añadir más sprites

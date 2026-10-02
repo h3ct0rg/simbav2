@@ -7,6 +7,8 @@
 //
 //  · "Jugando ahora" = ids que avisaron en los últimos 70 s (al cerrar u ocultar la pestaña se borran).
 //  · "Jugadores"     = ids distintos que abrieron el juego alguna vez (uno por navegador).
+//  /simba/choices/give/<runId> · /simba/choices/keep/<runId> = true
+//      elección con el lobo: UNA por partida (la primera). Se muestra al terminar el juego.
 //  · El id es aleatorio y anónimo: no se guarda ningún dato personal.
 //  · Si no hay conexión o Firebase falla, el juego sigue igual y el indicador no se muestra.
 // ============================================================
@@ -78,6 +80,19 @@ function goOffline() { // al cerrar u ocultar la pestaña deja de contar como "j
 }
 // el nivel alcanzado se actualiza al completar niveles (lo llama recordLevel)
 function statsLevelUp() { statsFetch('players/' + PLAYER_ID, { method: 'PATCH', body: { last: SERVER_TS, lvl: furthestLevelId() } }).catch(() => { }); }
+
+// Elección con el lobo: se registra solo la primera de cada partida (las reglas impiden sobrescribirla)
+function recordChoice(kind, runId) {
+  if (!runId) return;
+  statsFetch(`choices/${kind}/${runId}`, { method: 'PUT', body: true }).catch(() => { });
+}
+// Cuántas partidas eligieron cada opción. null si no hay conexión.
+async function fetchChoiceStats() {
+  try {
+    const [g, k] = await Promise.all(['give', 'keep'].map(kind => statsFetch(`choices/${kind}`, { query: '?shallow=true' })));
+    return { give: Object.keys(g || {}).length, keep: Object.keys(k || {}).length };
+  } catch (e) { return null; }
+}
 
 // se arranca cuando ya cargaron todos los scripts (necesita los niveles y las partidas)
 addEventListener('load', async function startStats() {

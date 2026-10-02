@@ -17,3 +17,94 @@ id: 32982c7e-3310-440b-91a6-4b4956d7bf9a | job_id: 32982c7e-3310-440b-91a6-4b495
 >> candy_cane
 id: 334ad650-6eaa-40b7-9341-d90e4bc84d90 | job_id: 334ad650-6eaa-40b7-9341-d90e4bc84d90 | description: big red and white striped candy cane stuck in the snow with a green bow, game prop | size: 32x64px | transparent: True | asset_
 >> candy_cane_wait
+1 job(s) finished after 33s, 0 still running: | 334ad650-6eaa-40b7-9341-d90e4bc84d90 completed (image_pixflux, took 34s) | hint: nothing else is running
+>> gifts
+id: fe026e10-8646-4ca5-99f6-3229b8651d8f | job_id: fe026e10-8646-4ca5-99f6-3229b8651d8f | description: small pile of three wrapped Christmas gift boxes with ribbons and bows, red green and gold, on snow, game prop | size: 64x4
+>> gifts_wait
+1 job(s) finished after 30s, 0 still running: | fe026e10-8646-4ca5-99f6-3229b8651d8f completed (image_pixflux, took 32s) | hint: nothing else is running
+>> lamp
+id: 2e521a4e-ed7d-4411-b3eb-52057927f9a8 | job_id: 2e521a4e-ed7d-4411-b3eb-52057927f9a8 | description: old victorian street lamp post with warm glowing light, snow on top and a small Christmas wreath, game prop | size: 32x96px
+>> lamp_wait
+1 job(s) finished after 19s, 0 still running: | 2e521a4e-ed7d-4411-b3eb-52057927f9a8 completed (image_pixflux, took 20s) | hint: nothing else is running
+>> thin_ice
+id: 25cd1235-8f31-4cc1-ae87-d3922bea0d5c | job_id: 25cd1235-8f31-4cc1-ae87-d3922bea0d5c | description: thin cracked translucent blue ice platform floating, side view, horizontal game platform | size: 96x32px | transparent: True | 
+>> thin_ice_wait
+1 job(s) finished after 21s, 0 still running: | 25cd1235-8f31-4cc1-ae87-d3922bea0d5c completed (image_pixflux, took 22s) | hint: nothing else is running
+>> icicle
+id: ebaeb4f9-82c2-47fa-8f65-9152b3c98474 | job_id: ebaeb4f9-82c2-47fa-8f65-9152b3c98474 | description: sharp hanging icicle cluster, pointing down, translucent light blue ice, game hazard | size: 32x64px | transparent: True | asse
+>> icicle_wait
+1 job(s) finished after 24s, 0 still running: | ebaeb4f9-82c2-47fa-8f65-9152b3c98474 completed (image_pixflux, took 26s) | hint: nothing else is running
+>> sleigh
+id: a996a933-d5fd-4895-b6a3-88e65918f16b | job_id: a996a933-d5fd-4895-b6a3-88e65918f16b | description: Santa Claus in his red sleigh full of gifts pulled by two flying reindeer, side view facing left, flying, festive | size: 1
+>> sleigh_wait
+1 job(s) finished after 21s, 0 still running: | a996a933-d5fd-4895-b6a3-88e65918f16b completed (image_pixflux, took 22s) | hint: nothing else is running
+>> sleigh_fly
+id: d9bb6f75-ffcc-4a00-92d2-d5171f5071ed | job_id: d9bb6f75-ffcc-4a00-92d2-d5171f5071ed | action: the reindeer gallop through the air pulling the sleigh, legs moving, flying smoothly | frames: 8 | size: 128x64px | transparent: Tru
+>> sleigh_fly_wait
+1 job(s) finished after 116s, 0 still running: | d9bb6f75-ffcc-4a00-92d2-d5171f5071ed completed (animation, took 117s) | hint: nothing else is running
+>> snowman
+id: dec34330-27e4-4325-8975-d044782b3953 | job_id: dec34330-27e4-4325-8975-d044782b3953 | description: mischievous snowman enemy with a carrot nose, coal eyes, red scarf and a small top hat, holding a snowball, side view fac
+>> snowman_wait
+1 job(s) finished after 30s, 0 still running: | dec34330-27e4-4325-8975-d044782b3953 completed (image_pixflux, took 32s) | hint: nothing else is running
+>> snowman_throw
+id: b7c27d85-e223-4b04-8e7f-eb1656dc9fb9 | job_id: b7c27d85-e223-4b04-8e7f-eb1656dc9fb9 | action: the snowman throws the snowball forward with its stick arm | frames: 6 | size: 64x64px | transparent: True | asset_id: a0a18721-8a85-5
+>> snowman_throw_wait
+1 job(s) finished after 86s, 0 still running: | b7c27d85-e223-4b04-8e7f-eb1656dc9fb9 completed (animation, took 88s) | hint: nothing else is running
+>> penguin
+id: d704399a-e8ab-40b0-b2af-a74485de3c70 | job_id: d704399a-e8ab-40b0-b2af-a74485de3c70 | description: cheeky penguin enemy sliding on its belly on ice, side view facing left, wearing a tiny red beanie | size: 64x64px | transpar
+>> penguin_wait
+1 job(s) finished after 15s, 0 still running: | d704399a-e8ab-40b0-b2af-a74485de3c70 completed (image_pixflux, took 16s) | hint: nothing else is running
+>> elf
+id: f31a4368-6bfc-4b8a-b34c-42c5cf6d11aa | job_id: f31a4368-6bfc-4b8a-b34c-42c5cf6d11aa | description: friendly Christmas elf with green clothes, pointy ears, red and white striped hat with a bell, smiling and waving, side v
+>> elf_wait
+1 job(s) finished after 12s, 0 still running: | f31a4368-6bfc-4b8a-b34c-42c5cf6d11aa completed (image_pixflux, took 13s) | hint: nothing else is running
+>> elf_wave
+id: fb576ad0-e5cc-425e-b157-cdc7793f5b80 | job_id: fb576ad0-e5cc-425e-b157-cdc7793f5b80 | action: the elf waves hello happily and bounces a little | frames: 6 | size: 64x64px | transparent: True | asset_id: 5422466d-3c84-502c-ae74-1
+>> elf_wave_wait
+1 job(s) finished after 113s, 0 still running: | fb576ad0-e5cc-425e-b157-cdc7793f5b80 completed (animation, took 115s) | hint: nothing else is running
+>> wolf_create
+id: 93175400-2f9f-4ee3-a97e-9c0f6defca49 | name: Snow Wolf Boss | mode: standard (1 generation) | directions: 4 | body: quadruped (dog) | size: 112x112px | style: basic shading, single color black outline, high detail | status: proces
+>> wolf_wait
+1 job(s) finished after 116s, 0 still running: | ab0abc59-16ed-4bda-8e10-026f54819bb2 completed (generation, took 118s) -> get_character(character_id="93175400-2f9f-4ee3-a97e-9c0f6defca49") | hint: nothing else is running
+>> wolf_run
+character: 93175400-2f9f-4ee3-a97e-9c0f6defca49 | animation: running-6-frames | directions: east (1 jobs) | group: 834c807b-13d1-41f4-9868-17fe92e00082 | eta: ~2-4 min | add more directions to this group: animate_character(charact
+>> wolf_run_wait
+1 job(s) finished after 4s, 0 still running: | bb29b119-c890-41c2-ae4d-bff37897e92d completed (generation, took 372s) -> get_character(character_id="93175400-2f9f-4ee3-a97e-9c0f6defca49") | hint: nothing else is running
+>> wolf_howl
+character: 93175400-2f9f-4ee3-a97e-9c0f6defca49 | animation: v3 custom (raises its head to the sky and howls loudly, powerful) | directions: east (1 jobs) | group: dbf87ce0-eab8-4304-b280-2fc3fcffc38e | frames: 6 (reference stri
+>> wolf_howl_wait
+1 job(s) finished after 124s, 0 still running: | 166caf36-9aac-41ad-9b37-065f623d6b93 completed (generation, took 126s) -> get_character(character_id="93175400-2f9f-4ee3-a97e-9c0f6defca49") | hint: nothing else is running
+>> wolf_sad
+character: 93175400-2f9f-4ee3-a97e-9c0f6defca49 | animation: v3 custom (lies down on the ground exhausted, head low, sad and tired) | directions: east (1 jobs) | group: 20b785a4-3280-4c65-b9ab-425c19fd9039 | frames: 4 (reference
+>> wolf_sad_wait
+1 job(s) finished after 57s, 0 still running: | 8425be2a-81c1-470f-ac99-69eb44051586 completed (generation, took 60s) -> get_character(character_id="93175400-2f9f-4ee3-a97e-9c0f6defca49") | hint: nothing else is running
+>> wolf_info
+status: completed | id: 93175400-2f9f-4ee3-a97e-9c0f6defca49 | name: Snow Wolf Boss | state_name: Idle | directions: 4 (south, east, north, west) | size: 160x160px | view: side | style: basic shading, single color black outline, high 
+>> cub_create
+id: 76745694-597f-484c-97e0-6c95c5e50332 | name: Wolf Pup | mode: standard (1 generation) | directions: 4 | body: quadruped (dog) | size: 48x48px | style: basic shading, single color black outline, high detail | status: processing (~2
+>> cub_wait
+1 job(s) finished after 50s, 0 still running: | 49380684-a774-48e2-9bcf-b0c5fffbd41f completed (generation, took 51s) -> get_character(character_id="76745694-597f-484c-97e0-6c95c5e50332") | hint: nothing else is running
+>> cub_run
+character: 76745694-597f-484c-97e0-6c95c5e50332 | animation: running-6-frames | directions: east (1 jobs) | group: bbf16c6f-1c5a-4ee4-84b4-aabd20b502bf | eta: ~2-4 min | add more directions to this group: animate_character(charact
+>> cub_run_wait
+1 job(s) finished after 76s, 0 still running: | 30eab4a7-183e-4535-80cb-f53cb4b5fb0e completed (generation, took 77s) -> get_character(character_id="76745694-597f-484c-97e0-6c95c5e50332") | hint: nothing else is running
+>> cub_info
+status: completed | id: 76745694-597f-484c-97e0-6c95c5e50332 | name: Wolf Pup | state_name: Idle | directions: 4 (south, east, north, west) | size: 68x68px | view: side | style: basic shading, single color black outline, high detail | g
+>> house
+id: 90e798e5-3d31-4ce4-b0fa-55ce48889bc4 | job_id: 90e798e5-3d31-4ce4-b0fa-55ce48889bc4 | description: cozy Christmas cottage seen from the front-side, thick snow on the roof, colorful lights along the roof edge, wreath on t
+>> house_wait
+1 job(s) finished after 30s, 0 still running: | 90e798e5-3d31-4ce4-b0fa-55ce48889bc4 completed (image_pixflux, took 31s) | hint: nothing else is running
+>> interior
+id: 147d9b2a-8c09-418e-95c6-2b488d064d01 | job_id: 147d9b2a-8c09-418e-95c6-2b488d064d01 | description: cozy Christmas living room interior, full scene, a big decorated Christmas tree with a shining gold star on top on the ri
+>> interior_wait
+1 job(s) finished after 40s, 0 still running: | 147d9b2a-8c09-418e-95c6-2b488d064d01 completed (image_pixflux, took 43s) | hint: nothing else is running
+>> mom_lying
+id: 5699a24a-01aa-4784-9b13-6d7271167ba9 | job_id: 5699a24a-01aa-4784-9b13-6d7271167ba9 | description: the same fluffy gray and white cat lying down curled up resting peacefully, sleepy happy face, side view | size: 92x92px | tr
+>> mom_lying_wait
+1 job(s) finished after 18s, 0 still running: | 5699a24a-01aa-4784-9b13-6d7271167ba9 completed (image_pixflux, took 19s) | hint: nothing else is running
+== LISTO ==
+credits: $0.00
+generations_remaining: 5
+generations_used: 35
+generations_total: 40
+subscription: trial

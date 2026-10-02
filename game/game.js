@@ -75,10 +75,22 @@ const A = {
   tiles: S.tiles ? Object.fromEntries(Object.entries(S.tiles).map(([k, v]) => [k, img(v)])) : null,
   tilesSummer: S.tiles_summer ? Object.fromEntries(Object.entries(S.tiles_summer).map(([k, v]) => [k, img(v)])) : null,
   tilesAutumn: S.tiles_autumn ? Object.fromEntries(Object.entries(S.tiles_autumn).map(([k, v]) => [k, img(v)])) : null,
+  // Mundo 4 (invierno navideño)
+  tilesWinter: S.tiles_winter ? Object.fromEntries(Object.entries(S.tiles_winter).map(([k, v]) => [k, img(v)])) : null,
+  bgWinter: imgOrNull(S.bg_winter), village: imgOrNull(S.village),
+  xmasTree: imgOrNull(S.xmas_tree), candyCane: imgOrNull(S.candy_cane), gifts: imgOrNull(S.gifts), lamp: imgOrNull(S.lamp),
+  thinIce: imgOrNull(S.thin_ice), icicle: imgOrNull(S.icicle),
+  sleigh: imgOrNull(S.sleigh), sleighSet: loadSet(S.sleigh_fly),
+  snowman: imgOrNull(S.snowman), snowmanSet: loadSet(S.snowman_throw), penguin: imgOrNull(S.penguin),
+  elf: imgOrNull(S.elf), elfSet: loadSet(S.elf_wave),
+  wolf: loadSet(S.wolf), cub: loadSet(S.cub),
+  house: imgOrNull(S.house), interior: imgOrNull(S.interior), momLying: imgOrNull(S.mom_lying), heroLying: imgOrNull(S.hero_lying),
+  motherWalk: loadSet(S.mother_walk), interiorWindow: imgOrNull(S.interior_window),
 };
 
 // ---------------- Estaciones ----------------
 const AUTUMN_HORIZON = 200; // fila de la imagen de otoño donde la hierba toca la tierra
+const WINTER_HORIZON = 194; // fila de la imagen de invierno donde la nieve del fondo toca el suelo
 // Fondo, terreno, agua y ambiente de cada mundo. `horizon` = fila de la imagen de fondo
 // donde la hierba toca la tierra (se alinea con el césped jugable).
 const SEASON_CFG = {
@@ -88,6 +100,8 @@ const SEASON_CFG = {
     sky: ['#6fe2f7', '#b8f2f7'], waterfall: { x0: 258, x1: 286, y0: 86, y1: 170 } },
   autumn: { bg: () => A.bgAutumn, tiles: () => A.tilesAutumn || A.tiles, horizon: AUTUMN_HORIZON, water: true, ambient: 'leaves',
     sky: ['#f7b267', '#ffe0a8'], wind: true, sunrays: true },
+  winter: { bg: () => A.bgWinter, tiles: () => A.tilesWinter || A.tiles, horizon: WINTER_HORIZON, water: true, ambient: 'snow',
+    sky: ['#3b2a6b', '#c9a6e0'], village: true, haze: 'rgba(200,210,255,0.06)' },
 };
 const curSeason = () => (LV && !['menu', 'settings'].includes(state) ? LV.world.season : 'spring');
 const seasonCfg = s => SEASON_CFG[s] || SEASON_CFG.spring;
@@ -180,13 +194,44 @@ const BASS_AUTUMN = [
   45, 52, 45, 52,  41, 48, 41, 48,  43, 50, 43, 50,  45, 52, 40, 0,
   45, 52, 45, 52,  41, 48, 41, 48,  43, 50, 47, 50,  45, 52, 45, 0,
 ];
+// Invierno: "Jingle Bells" (tradicional, dominio público) con cascabeles
+const MELODY_WINTER = [
+  76, 0, 76, 0, 76, 0, 0, 0,   76, 0, 76, 0, 76, 0, 0, 0,   76, 0, 79, 0, 72, 0, 0, 74,   76, 0, 0, 0, 0, 0, 0, 0,
+  77, 0, 77, 0, 77, 0, 0, 77,  77, 0, 76, 0, 76, 0, 76, 76, 76, 0, 74, 0, 74, 0, 76, 0,    74, 0, 0, 0, 79, 0, 0, 0,
+  76, 0, 76, 0, 76, 0, 0, 0,   76, 0, 76, 0, 76, 0, 0, 0,   76, 0, 79, 0, 72, 0, 0, 74,   76, 0, 0, 0, 0, 0, 0, 0,
+  77, 0, 77, 0, 77, 0, 0, 77,  77, 0, 76, 0, 76, 0, 76, 76, 79, 0, 79, 0, 77, 0, 74, 0,    72, 0, 0, 0, 0, 0, 0, 0,
+];
+const BASS_WINTER = [
+  48, 55, 48, 55,  48, 55, 48, 55,  48, 55, 48, 55,  48, 55, 52, 55,
+  53, 60, 53, 60,  48, 55, 48, 55,  50, 57, 50, 57,  43, 50, 43, 47,
+  48, 55, 48, 55,  48, 55, 48, 55,  48, 55, 48, 55,  48, 55, 52, 55,
+  53, 60, 53, 60,  48, 55, 48, 55,  43, 50, 43, 50,  48, 43, 48, 0,
+];
+// Pelea con el Lobo: ostinato en menor, tenso
+const MELODY_WOLF = [
+  69, 0, 72, 69, 76, 0, 74, 72,    71, 0, 74, 71, 77, 0, 76, 74,   69, 0, 72, 69, 76, 0, 79, 77,   76, 74, 72, 71, 69, 0, 64, 0,
+];
+const BASS_WOLF = [45, 45, 45, 45, 44, 44, 44, 44, 41, 41, 43, 43, 45, 40, 45, 0];
+// Final en la casita: "Noche de paz" (Gruber, 1818, dominio público), en 6/8, suave
+const MELODY_ENDING = [
+  79, 0, 0, 81, 79, 0,  76, 0, 0, 0, 0, 0,  79, 0, 0, 81, 79, 0,  76, 0, 0, 0, 0, 0,
+  86, 0, 86, 83, 0, 0,  0, 0, 0, 0, 0, 0,   84, 0, 84, 79, 0, 0,  0, 0, 0, 0, 0, 0,
+  81, 0, 81, 84, 83, 81, 79, 81, 79, 76, 0, 0, 81, 0, 81, 84, 83, 81, 79, 81, 79, 76, 0, 0,
+  86, 0, 86, 89, 86, 83, 84, 0, 0, 88, 0, 0, 84, 79, 76, 79, 77, 74, 72, 0, 0, 0, 0, 0,
+];
+const BASS_ENDING = [48, 55, 48, 55, 48, 55, 48, 55, 43, 50, 48, 55, 41, 48, 48, 55, 41, 48, 48, 55, 43, 50, 48, 55, 43, 48, 43, 48, 48, 43, 48, 0];
 const MUSIC_CFG = {
   spring: { melody: MELODY, bass: BASS, bpm: 132, lead: 'square', transpose: 0 },
   summer: { melody: MELODY_SUMMER, bass: BASS_SUMMER, bpm: 146, lead: 'triangle', transpose: 2 },
   autumn: { melody: MELODY_AUTUMN, bass: BASS_AUTUMN, bpm: 118, lead: 'square', transpose: 0 },
+  winter: { melody: MELODY_WINTER, bass: BASS_WINTER, bpm: 150, lead: 'square', transpose: 0, bells: true },
+  wolf: { melody: MELODY_WOLF, bass: BASS_WOLF, bpm: 156, lead: 'sawtooth', transpose: 0 },
+  ending: { melody: MELODY_ENDING, bass: BASS_ENDING, bpm: 96, lead: 'triangle', transpose: 0, bassEvery: 3, noHat: true, bells: true },
 };
 const musicCfg = () => {
+  if (state === 'ending') return MUSIC_CFG.ending;
   const season = state === 'map' ? WORLDS[Math.floor(map.sel / LEVELS_PER_WORLD)].season : curSeason();
+  if (season === 'winter' && boss && boss.type === 'wolf' && arena && arena.active && !arena.done && ['play', 'dying', 'pause'].includes(state)) return MUSIC_CFG.wolf;
   return MUSIC_CFG[season] || MUSIC_CFG.spring;
 };
 let musicStep = 0, musicNext = 0, noiseBuf = null;
@@ -217,12 +262,15 @@ function startMusic() {
     while (musicNext < AC.currentTime + 0.25) { // programa notas con antelación (sin cortes)
       const m = musicCfg(), BEAT = 60 / m.bpm / 2; // duración de una corchea
       const i = musicStep % m.melody.length;
-      if (m.melody[i]) note(midi(m.melody[i] + m.transpose), musicNext, BEAT * 0.9, m.lead, m.lead === 'square' ? 0.05 : 0.09);
-      if (i % 2 === 0) {
-        const b = m.bass[(i / 2) % m.bass.length];
-        if (b) note(midi(b + m.transpose), musicNext, BEAT * 1.8, 'triangle', 0.14);
+      if (m.melody[i]) note(midi(m.melody[i] + m.transpose), musicNext, BEAT * 0.9, m.lead, m.lead === 'square' ? 0.05 : m.lead === 'sawtooth' ? 0.03 : 0.09);
+      const be = m.bassEvery || 2;
+      if (i % be === 0) {
+        const b = m.bass[(i / be) % m.bass.length];
+        if (b) note(midi(b + m.transpose), musicNext, BEAT * be * 0.9, 'triangle', 0.14);
       }
-      if (i % 2 === 1) hat(musicNext, 0.035);
+      if (i % 2 === 1 && !m.noHat) hat(musicNext, 0.035);
+      // cascabeles: un tintineo agudo en cada tiempo fuerte
+      if (m.bells && i % (be * 2) === 0) { note(2637, musicNext, 0.08, 'sine', 0.02); note(3136, musicNext + 0.03, 0.06, 'sine', 0.015); }
       musicNext += BEAT; musicStep++;
     }
   }, 60);
@@ -258,6 +306,7 @@ const SFX = {
   wind: () => { beep(300, 500, 0.9, 'sine', 0.035); beep(320, 260, 0.9, 'triangle', 0.025, 0.2); },
   snort: () => { beep(160, 90, 0.18, 'sawtooth', 0.07); beep(180, 100, 0.15, 'sawtooth', 0.06, 0.2); },
 };
+Object.assign(SFX, WINTER_SFX); // sonidos del mundo 4 (winter.js)
 
 // ---------------- Input ----------------
 const keys = {};
@@ -284,6 +333,7 @@ const inJump = () => JUMP_CODES.some(c => keys[c]) || touch.jump;
 
 function onPress(code) {
   if (state === 'map') { mapKey(code); return; }
+  if (state === 'choice') { choiceKey(code); return; }
   if (JUMP_CODES.includes(code)) pressJump();
   if (code === 'Enter') pressStart();
   if ((code === 'ArrowDown' || code === 'KeyS') && state === 'play') tryDoor();
@@ -301,6 +351,7 @@ function pressStart() {
   else if (state === 'clear' && clearT > 0.8) finishClear();
   else if (state === 'win' && feed.phase === 'done' && feed.doneT > 1.2) finishWorld();
   else if (state === 'gameover' && deadT > 0.8) gameOverContinue();
+  else if (state === 'ending') endingPress();
   else if (state === 'map') mapPlay();
 }
 
@@ -373,6 +424,7 @@ canvas.addEventListener('touchstart', e => {
   if (slotPointerDown(tc.clientX, tc.clientY)) return;
   if (isMenuState()) menuPointer(tc.clientX, tc.clientY);
   else if (state === 'map') mapPointer(tc.clientX, tc.clientY);
+  else if (state === 'choice') choicePointer(tc.clientX, tc.clientY);
   else pressStart();
 }, { passive: false });
 function slotPointerDown(cx_, cy_) {
@@ -387,11 +439,12 @@ canvas.addEventListener('mousedown', e => {
   if (slotPointerDown(e.clientX, e.clientY)) return;
   if (isMenuState()) menuPointer(e.clientX, e.clientY);
   else if (state === 'map') mapPointer(e.clientX, e.clientY);
+  else if (state === 'choice') choicePointer(e.clientX, e.clientY);
   else if (state !== 'play') pressStart();
 });
 canvas.addEventListener('mousemove', e => {
   if (isMenuState()) menuHover(e.clientX, e.clientY);
-  const clickable = (isMenuState() || state === 'map') && hitAt(toCanvas(e.clientX, e.clientY));
+  const clickable = (isMenuState() || state === 'map' || state === 'choice') && hitAt(toCanvas(e.clientX, e.clientY));
   canvas.style.cursor = clickable ? 'pointer' : 'default';
 });
 // Si el móvil se gira a vertical en plena partida, se pausa
@@ -449,6 +502,21 @@ let player, particles, checkpoint, mother;
 let state = 'menu', hearts = 3, fishCount = 0, timeT = 0, shake = 0, deadT = 0, msgT = 0, msg = '';
 let introT = 0, clearT = 0, dieT = 0, doorT = 0, doorTo = null, talk = null, clearInfo = null;
 let lifesFound = 0, autosaveT = 0;
+let wolfGift = 0; // pescados que Simba compartió con el lobo (se restan de los de mamá)
+// Salud: 3 corazones + 1 por cada corazón dorado encontrado (máx. 7).
+// Cada 20 pescados se llena la barra de pescado y cura 1 corazón; con la salud llena queda
+// guardada (brillando) y cura en cuanto Simba recibe un golpe.
+const BASE_HEARTS = 3, FISH_PER_HEART = 20;
+const maxHearts = () => Math.min(7, BASE_HEARTS + goldHeartCount());
+let fishMeter = 0, healT = 0, heartPop = null, goldPop = null;
+function healHeart() {
+  if (hearts <= 0 || hearts >= maxHearts() || fishMeter < FISH_PER_HEART) return;
+  hearts++; fishMeter = 0;
+  heartPop = { i: hearts - 1, t: 0 };
+  SFX.grow();
+  puff(player.x + player.w / 2, player.y, 14, '#ff9ec0', 60, 70, 0.6, 3);
+  heartBurst(player.x + player.w / 2, player.y - 6);
+}
 let camX = 0, camY = 0;
 
 // Alimentar a mamá (nivel 4): se le entregan los pescados de TODO el mundo
@@ -468,8 +536,8 @@ function makePlayer(x, y) {
   return { x, y, w: 30, h: 26, vx: 0, vy: 0, onGround: false, facing: 1, coyote: 0, jumpBuffer: 0,
     invuln: 0, sx: 1, sy: 1, animT: 0, dustT: 0, prevBottom: 0 };
 }
-const WALK_SPEED = { dog: 62, rat: 105, crab: 80, boar: 55 };
-const WALKER_SIZE = { dog: [38, 28], rat: [28, 18], crab: [30, 22], boar: [40, 30] };
+const WALK_SPEED = { dog: 62, rat: 105, crab: 80, boar: 55, penguin: 48 };
+const WALKER_SIZE = { dog: [38, 28], rat: [28, 18], crab: [30, 22], boar: [40, 30], penguin: [30, 26] };
 
 // Construye el estado jugable de un área a partir de su mapa
 function buildArea(rows, isRoom, roomId, style) {
@@ -511,6 +579,14 @@ function buildArea(rows, isRoom, roomId, style) {
     .filter(o => !SAVE.oneups[o.key]);
   a.doorObjs = a.doors.map(dr => ({ id: dr.id, x: dr.c * TS, y: (dr.r + 1) * TS, style: (LV.rooms[dr.id] || {}).style || 'cave', sparkT: Math.random() * 2 }));
   if (a.exit) a.exitObj = { x: a.exit.c * TS, y: (a.exit.r + 1) * TS };
+  buildWinter(a); // hielo fino, carámbanos, muñecos de nieve y decoración navideña
+  // corazón dorado del mundo: en la sala sorteada para esta partida, junto a la vida escondida
+  if (isRoom && goldSpotHere(roomId) && !(SAVE.goldHearts || {})[LV.world.id]) {
+    const l = a.lifes[0] || a.fish[0] || { c: 3, r: a.groundRow - 2 };
+    const free = c => c > 0 && c < a.cols - 1 && !a.grid[l.r][c];
+    const c = free(l.c - 1) ? l.c - 1 : free(l.c + 1) ? l.c + 1 : l.c;
+    a.goldHeart = { x: c * TS + 2, y: l.r * TS + 2, w: 28, h: 28, t: Math.random() * 6, taken: false };
+  }
   return a;
 }
 
@@ -523,13 +599,15 @@ function startLevel(id) {
   setArea(MAIN);
   const sp = MAIN.spawn || { c: 2, r: G - 1 };
   player = makePlayer(sp.c * TS, (sp.r + 1) * TS - 26);
-  hearts = 3; fishCount = 0; timeT = 0; shake = 0; msgT = 0; lifesFound = 0;
+  hearts = maxHearts(); fishCount = 0; timeT = 0; shake = 0; msgT = 0; lifesFound = 0;
+  fishMeter = 0; healT = 0; heartPop = null; goldPop = null;
   particles = [];
   feed = newFeed();
   // varios puntos de control por nivel: se reaparece en el último que se cruzó
   checkpoint = { spawnX: player.x, spawnY: player.y,
     flags: MAIN.checkpoints.map(c => ({ x: c.c * TS, y: (c.r + 1) * TS, active: false })) };
   acorns = []; wind = { t: 5, dir: 1, phase: 'calm', strength: 0 };
+  wolfGift = 0; ambient = []; sleigh.active = false; sleigh.t = 6 + Math.random() * 6;
   mother = MAIN.mother ? { x: MAIN.mother.c * TS, y: (MAIN.mother.r + 1) * TS, w: 50, h: 40, animT: 0 } : null;
   MAIN.kitten = MAIN.messenger ? { x: MAIN.messenger.c * TS + 16, y: (MAIN.messenger.r + 1) * TS, animT: 0 } : null;
   setupBoss(MAIN);
@@ -538,6 +616,31 @@ function startLevel(id) {
   if (LV.id === '1-1') flash(IS_TOUCH ? t('tip_touch') : t('tip_keys'), 4);
 }
 const restartLevel = () => startLevel(LV.id);
+const goldSpotHere = roomId => !!(SAVE.goldSpots && SAVE.goldSpots[LV.world.id] === LV.id + ':' + roomId);
+const goldHeartRoom = roomId => goldSpotHere(roomId) && !(SAVE.goldHearts || {})[LV.world.id];
+function collectGoldHeart(gh) {
+  gh.taken = true;
+  SAVE.goldHearts = Object.assign(SAVE.goldHearts || {}, { [LV.world.id]: true });
+  writeSave();
+  hearts = Math.min(maxHearts(), hearts + 1); // el corazón nuevo llega lleno
+  goldPop = { t: 0 }; heartPop = { i: maxHearts() - 1, t: 0 };
+  SFX.oneup(); SFX.achieve(); shake = 4;
+  flash(t('gold_heart'), 3);
+  puff(gh.x + 14, gh.y + 14, 30, '#ffd23f', 120, 120, 0.9, 4);
+  for (let i = 0; i < 3; i++) heartBurst(gh.x + 14, gh.y);
+}
+function drawGoldHeart(gh, cx, cy) {
+  if (!gh || gh.taken) return;
+  const x = gh.x + 14 - cx, y = gh.y + 10 - cy + Math.sin(gh.t * 2.5) * 3;
+  const g = ctx.createRadialGradient(x, y + 4, 2, x, y + 4, 34);
+  g.addColorStop(0, `rgba(255,220,110,${0.6 + Math.sin(gh.t * 4) * 0.15})`); g.addColorStop(1, 'rgba(255,220,110,0)');
+  ctx.fillStyle = g; ctx.fillRect(x - 34, y - 30, 68, 68);
+  ctx.strokeStyle = 'rgba(255,240,170,0.55)'; ctx.lineWidth = 1.5; // rayos girando
+  for (let i = 0; i < 6; i++) { const a = gh.t * 0.8 + i * Math.PI / 3; ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * 14, y + 4 + Math.sin(a) * 14); ctx.lineTo(x + Math.cos(a) * 24, y + 4 + Math.sin(a) * 24); ctx.stroke(); }
+  const s = 2.1 * (1 + Math.sin(gh.t * 5) * 0.05);
+  drawHeart(x, y - 4 * s / 2, s, '#ffd23f');
+  ctx.fillStyle = '#fff7c2'; ctx.fillRect(Math.round(x - 5), Math.round(y - 1), 3, 3); // brillo
+}
 
 // ---------------- Partículas ----------------
 function puff(x, y, n, color, spread = 60, up = 40, life = 0.4, size = 3) {
@@ -557,6 +660,7 @@ function updateParticles(dt) {
 function hurtPlayer(fromX) {
   if (player.invuln > 0 || state !== 'play') return;
   hearts--; shake = 8; SFX.hurt();
+  if (hearts > 0 && fishMeter >= FISH_PER_HEART) healT = 1; // la reserva de pescado cura enseguida
   player.invuln = 1.5;
   const away = player.x + player.w / 2 < fromX ? -1 : 1;
   player.vx = away * 260; player.vy = -330;
@@ -581,7 +685,7 @@ function respawn() {
   player.x = checkpoint.spawnX; player.y = checkpoint.spawnY;
   player.vx = 0; player.vy = 0; player.invuln = 1.5; player.facing = 1; player.splashed = false; player.onMover = null;
   acorns = [];
-  hearts = 3;
+  hearts = maxHearts(); healT = 0;
   resetBossFight();
   snapCamera();
 }
@@ -635,6 +739,7 @@ function updateMovers(dt) {
     m.t += dt;
     const ph = m.t * Math.PI * 2 / m.period;
     if (m.leaf) updateLeaf(m, dt);
+    else if (m.thin) updateThinIce(m, dt);
     else if (m.axis === 'x') m.x = m.x0 + Math.sin(ph) * m.amp;
     else m.y = m.y0 - (1 - Math.cos(ph)) / 2 * m.amp;
     m.dx = m.x - px; m.dy = m.y - py;
@@ -695,9 +800,10 @@ function updateGeysers(dt, p) {
 let wind = { t: 4, dir: 1, phase: 'calm', strength: 0 };
 function updateWind(dt, p) {
   const cfg = seasonCfg(curSeason());
-  if (!cfg.wind || AR.isRoom) { wind.strength = 0; return; }
+  const blizzard = blizzardOn();
+  if ((!cfg.wind && !blizzard) || AR.isRoom) { wind.strength = 0; return; }
   wind.t -= dt;
-  const bossBoost = boss && boss.final && arena && arena.active ? 1.6 : 1;
+  const bossBoost = blizzard ? 1.45 : boss && boss.final && arena && arena.active ? 1.6 : 1;
   if (wind.phase === 'calm' && wind.t <= 0) { wind.phase = 'warn'; wind.t = 1; wind.dir = Math.random() < 0.5 ? -1 : 1; SFX.wind(); }
   else if (wind.phase === 'warn' && wind.t <= 0) { wind.phase = 'gust'; wind.t = 2.5; }
   else if (wind.phase === 'gust' && wind.t <= 0) { wind.phase = 'calm'; wind.t = 6 + Math.random() * 3; }
@@ -723,18 +829,20 @@ function updatePlayer(dt) {
   const p = player;
   p.prevBottom = p.y + p.h;
   const dir = (inRight() ? 1 : 0) - (inLeft() ? 1 : 0);
-  const accel = p.onGround ? 2400 : 1600;
+  const ice = onIce(p); // en el hielo cuesta arrancar y aún más frenar
+  const accel = p.onGround ? 2400 * (ice ? ICE_ACCEL : 1) : 1600;
   if (dir) {
     const turning = p.vx !== 0 && Math.sign(p.vx) !== dir; // giro rápido
-    p.vx += dir * accel * dt * (turning ? 1.8 : 1);
+    p.vx += dir * accel * dt * (turning && !ice ? 1.8 : 1);
     p.facing = dir;
   } else {
-    const dec = (p.onGround ? 2600 : 700) * dt;
+    const dec = (p.onGround ? 2600 * (ice ? ICE_DECEL : 1) : 700) * dt;
     p.vx = Math.abs(p.vx) <= dec ? 0 : p.vx - Math.sign(p.vx) * dec;
   }
   // Joystick analógico: inclinarlo poco = caminar, a fondo = correr
   const maxV = touch.axis ? MAXV * clamp(Math.abs(touch.axis) * 1.25, 0.45, 1) : MAXV;
   p.vx = clamp(p.vx, -maxV, maxV);
+  if (ice && Math.abs(p.vx) > 120 && Math.random() < dt * 20) puff(p.x + p.w / 2, p.y + p.h, 1, '#e6f8ff', 25, 10, 0.3, 2); // destellos de hielo
 
   p.coyote = p.onGround ? 0.1 : p.coyote - dt;
   p.jumpBuffer -= dt;
@@ -779,6 +887,7 @@ function updatePlayer(dt) {
   p.sy = lerp(p.sy, 1, Math.min(1, dt * 12));
   p.invuln = Math.max(0, p.invuln - dt);
   p.animT += dt;
+  updateBreath(dt);
 
   if (p.y > ROWS * TS + 40) { SFX.fall(); die(true); return; } // precipicio: se pierde una vida
   if (!AR.isRoom) for (const f of checkpoint.flags) {
@@ -803,7 +912,9 @@ function updateEnemies(dt) {
         e.throwT = 2.4 / (LV.diff || 1); e.throwAnim = 0.25;
         throwAcorn(e.x + e.w / 2, e.y + 4, p, 0.85); SFX.squeak();
       }
-    } else if (e.type === 'boar') { // camina despacio; si ve a Simba delante, embiste
+    } else if (e.type === 'snowman') updateSnowman(e, dt);
+    else if (e.type === 'penguin') updatePenguin(e, dt);
+    else if (e.type === 'boar') { // camina despacio; si ve a Simba delante, embiste
       const ahead = (p.x - e.x) * Math.sign(e.vx || -1), sameLevel = Math.abs((p.y + p.h) - (e.y + e.h)) < TS;
       if (!e.charge && (e.cool || 0) <= 0 && ahead > 0 && ahead < 6 * TS && sameLevel) { e.charge = 0.15; SFX.snort(); }
       e.cool = Math.max(0, (e.cool || 0) - dt);
@@ -851,6 +962,9 @@ function updateWorld(dt) {
     f.t += dt;
     if (!f.taken && overlap(player, f)) {
       f.taken = true; fishCount++; SFX.fish();
+      if (fishMeter < FISH_PER_HEART && ++fishMeter >= FISH_PER_HEART) {
+        if (hearts < maxHearts()) healT = Math.max(healT, 0.3); else SFX.check(); // reserva lista
+      }
       puff(f.x + 8, f.y + 7, 8, '#ffd23f', 50, 60, 0.4);
     }
   }
@@ -866,8 +980,17 @@ function updateWorld(dt) {
   }
   for (const d of AR.doorObjs || []) { // destellos sutiles que delatan la entrada secreta
     d.sparkT -= dt;
-    if (d.sparkT <= 0) { d.sparkT = 0.5 + Math.random() * 1.2; particles.push({ x: d.x + 6 + Math.random() * 20, y: d.y - 10 - Math.random() * 30, vx: 0, vy: -12, life: 0.9, max: 0.9, color: '#fff7c2', size: 2, g: 0 }); }
+    const gold = goldHeartRoom(d.id); // la sala del corazón dorado brilla en dorado
+    if (d.sparkT <= 0) { d.sparkT = (gold ? 0.3 : 0.5) + Math.random() * (gold ? 0.6 : 1.2); particles.push({ x: d.x + 6 + Math.random() * 20, y: d.y - 10 - Math.random() * 30, vx: 0, vy: -12, life: 0.9, max: 0.9, color: gold ? '#ffd23f' : '#fff7c2', size: gold ? 3 : 2, g: 0 }); }
   }
+  const gh = AR.goldHeart;
+  if (gh && !gh.taken) {
+    gh.t += dt;
+    if (overlap(player, gh) && state === 'play') collectGoldHeart(gh);
+  }
+  if (healT > 0) { healT -= dt; if (healT <= 0) healHeart(); }
+  if (heartPop) { heartPop.t += dt; if (heartPop.t > 0.6) heartPop = null; }
+  if (goldPop) { goldPop.t += dt; if (goldPop.t > 2) goldPop = null; }
   updateParticles(dt);
   if (mother) mother.animT += dt;
   if (AR.kitten) AR.kitten.animT += dt;
@@ -931,7 +1054,7 @@ function finishClear() { openMap(levelNodeIndex(LV) + 1, levelNodeIndex(LV)); }
 function startFeeding() {
   const w = LV.world;
   const others = w.levels.filter(l => l.id !== LV.id);
-  feed.bank = fishCount + others.reduce((s, l) => s + levelStats(l.id).fish, 0);
+  feed.bank = Math.max(0, fishCount + others.reduce((s, l) => s + levelStats(l.id).fish, 0) - wolfGift); // menos los que se compartieron con el lobo
   feed.total = w.levels.reduce((s, l) => s + levelFishTotal(l), 0);
 }
 function finishWorld() {
@@ -940,6 +1063,7 @@ function finishWorld() {
   SAVE.worldsDone = Object.assign(SAVE.worldsDone || {}, { [LV.world.id]: true });
   SAVE.mom = Object.assign(SAVE.mom || {}, { [LV.world.id]: Math.max((SAVE.mom || {})[LV.world.id] || 0, ratio) });
   writeSave();
+  if (LV.world === WORLDS[WORLDS.length - 1]) { startEnding(); return; } // último mundo: ¡a casa!
   openMap(levelNodeIndex(LV) + 1, levelNodeIndex(LV)); // al mundo siguiente (si ya existe)
 }
 const momMouth = () => ({ x: mother.x + mother.w / 2 - 20, y: mother.y - 26 });
@@ -999,6 +1123,7 @@ function update(dt) {
     updateAmbient(dt, curSeason());
     updateMovers(dt);
     updatePlayer(dt);
+    updateIcicles(dt);
     updateAcorns(dt);
     if (state === 'play') updateEnemies(dt);
     updateArena(dt);
@@ -1036,6 +1161,10 @@ function update(dt) {
     for (const e of AR.enemies) if (!e.alive) e.deadT += dt;
     updateWorld(dt);
     updateCamera(dt);
+  } else if (state === 'choice') {
+    updateChoice(dt);
+  } else if (state === 'ending') {
+    updateEnding(dt);
   } else if (state === 'gameover') {
     deadT += dt; updateParticles(dt);
   } else if (state === 'map') {
@@ -1072,7 +1201,12 @@ function drawBackground(cx, groundY, season = 'spring') {
       if (cfg.waterfall) drawWaterfall(cfg.waterfall, xr, y0, s, wr, mirror);
     }
   }
-  ctx.fillStyle = 'rgba(214,240,255,0.1)'; // bruma atmosférica leve (separa fondo y primer plano sin apagar los colores)
+  if (cfg.village) { // invierno: estrellas que titilan, el trineo y el pueblo con sus luces
+    drawStarsTwinkle();
+    if (state !== 'menu') drawSleigh();
+    drawVillage(cx, groundY);
+  }
+  ctx.fillStyle = cfg.haze || 'rgba(214,240,255,0.1)'; // bruma atmosférica leve (separa fondo y primer plano sin apagar los colores)
   ctx.fillRect(0, 0, VW, VH);
 }
 // Cascada animada sobre la imagen de fondo: hilos de agua cayendo y espuma en la base
@@ -1104,6 +1238,7 @@ let ambient = [];
 function updateAmbient(dt, season) {
   const kind = seasonCfg(season).ambient;
   if (AR && AR.isRoom) { ambient = []; return; }
+  if (kind === 'snow') { updateSnow(dt, blizzardOn()); updateSleigh(dt); return; }
   if (kind === 'leaves') {
     const COLORS = ['#e8792b', '#c94a1d', '#f2b134', '#a8501f'];
     if (ambient.length < 46 && Math.random() < dt * (14 + wind.strength * 30)) {
@@ -1132,6 +1267,7 @@ function drawLeafParticle(a) {
   ctx.restore();
 }
 function drawAmbient(front = true) {
+  if (seasonCfg(curSeason()).ambient === 'snow') return drawSnow(front);
   for (const a of ambient) {
     if (a.k === 'leaf') { if (a.front === front) drawLeafParticle(a); continue; }
     if (!front) continue;
@@ -1177,9 +1313,10 @@ function drawWater(cy, cave) {
   const g = ctx.createLinearGradient(0, top, 0, VH);
   if (cave) { g.addColorStop(0, '#2a6f9a'); g.addColorStop(0.4, '#123c5c'); g.addColorStop(1, '#06182a'); }
   else if (curSeason() === 'autumn') { g.addColorStop(0, '#5aa7c9'); g.addColorStop(0.35, '#2d6f93'); g.addColorStop(1, '#14344f'); }
+  else if (curSeason() === 'winter') { g.addColorStop(0, '#6fb6d6'); g.addColorStop(0.3, '#285f86'); g.addColorStop(1, '#0c2140'); } // agua helada
   else { g.addColorStop(0, '#3fd0e0'); g.addColorStop(0.35, '#1c8fb0'); g.addColorStop(1, '#0b4a6b'); }
   ctx.fillStyle = g; ctx.fillRect(0, top, VW, VH - top);
-  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.fillStyle = curSeason() === 'winter' ? 'rgba(225,245,255,0.85)' : 'rgba(255,255,255,0.75)';
   for (let x = 0; x < VW; x += 4) {
     const y = top + Math.sin(x / 18 + menuT * 3) * 2;
     ctx.fillRect(x, Math.round(y), 4, 2);
@@ -1208,6 +1345,7 @@ function drawTiles(cx, cy) {
       if (ok(im)) ctx.drawImage(im, c * TS - TS / 2 - cx, r * TS - TS / 2 - cy, TS, TS);
     }
   }
+  if (AR.ice && AR.ice.size) drawIceSheen(c0, c1, r0, r1, cx, cy);
   for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
     if (r < 0 || r >= ROWS || c < 0 || c >= COLS) continue;
     const t = tile(c, r), x = c * TS - cx, y = r * TS - cy;
@@ -1223,6 +1361,19 @@ function drawTiles(cx, cy) {
       if (tile(c - 1, r) !== ONEWAY) { ctx.fillStyle = '#5b3a1e'; ctx.fillRect(x + 4, y + 12, 3, 6); }
       if (tile(c + 1, r) !== ONEWAY) { ctx.fillStyle = '#5b3a1e'; ctx.fillRect(x + TS - 7, y + 12, 3, 6); }
     }
+  }
+}
+
+// Superficie de hielo: capa translúcida azulada con brillos que recorren el borde
+function drawIceSheen(c0, c1, r0, r1, cx, cy) {
+  for (let r = Math.max(0, r0); r <= Math.min(ROWS - 1, r1); r++) for (let c = Math.max(0, c0); c <= Math.min(COLS - 1, c1); c++) {
+    if (!AR.ice.has(r * COLS + c) || tile(c, r - 1) === SOLID) continue;
+    const x = c * TS - cx, y = r * TS - cy - 4;
+    ctx.fillStyle = 'rgba(170,225,255,0.55)'; ctx.fillRect(x, y, TS, 7);
+    ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fillRect(x, y, TS, 2);
+    ctx.fillStyle = 'rgba(90,160,210,0.5)'; ctx.fillRect(x, y + 6, TS, 1);
+    const g = (menuT * 40 + c * 37) % 90;
+    if (g < TS) { ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.fillRect(x + g, y + 2, 4, 2); }
   }
 }
 
@@ -1373,6 +1524,7 @@ function drawEnemy(e, cx, cy) {
   if (!e.alive) { if (e.deadT > 0.5) return; alpha = 1 - e.deadT / 0.5; sy = 0.35; }
   const fx = e.x + e.w / 2 - cx, fy = e.y + e.h - cy + (e.type === 'bat' ? 6 : 1);
   if (fx < -80 || fx > VW + 80) return;
+  if (drawWinterEnemy(e, fx, fy, sy, alpha)) return;
   if (e.type === 'dog') {
     const w = anim(A.dog, 'walk');
     if (w && drawFrame(frameAt(w, e.animT), fx, fy, e.vx < 0, 1, sy, alpha)) return;
@@ -1434,6 +1586,7 @@ function drawGeyser(g, cx, cy) {
 }
 function drawMover(m, cx, cy) {
   if (m.leaf) return drawLeafRaft(m, cx, cy);
+  if (m.thin) return drawThinIce(m, cx, cy);
   const x = m.x + m.w / 2 - cx, y = m.y - cy + 20 + Math.sin(m.t * 3) * 1; // flota un poco
   if (drawFrame(A.log, x, y, false)) return;
   ctx.fillStyle = '#8a5a2b'; ctx.fillRect(Math.round(m.x - cx), Math.round(m.y - cy), m.w, m.h);
@@ -1483,7 +1636,11 @@ function drawKitten(cx, cy) {
   const fx = k.x - cx, fy = k.y - cy + 2;
   const sit = anim(A.kitten, 'sit') || anim(A.kitten, 'idle');
   groundShadow(fx, fy - 2, 14);
-  if (LV.world.messenger === 'hedgehog') {
+  if (LV.world.messenger === 'elf') {
+    const wave = anim(A.elfSet, 'wave');
+    const f = wave ? frameAt(wave, k.animT, 7) : A.elf;
+    if (!drawFrame(f, fx, fy, false)) { ctx.fillStyle = '#3aa655'; ctx.fillRect(Math.round(fx - 10), Math.round(fy - 30), 20, 30); }
+  } else if (LV.world.messenger === 'hedgehog') {
     if (!drawFrame(A.hedgehog, fx, fy, false)) { ctx.fillStyle = '#8a6a4a'; ctx.fillRect(Math.round(fx - 14), Math.round(fy - 18), 28, 18); }
   } else if (LV.world.messenger === 'turtle') {
     if (!drawFrame(A.turtle, fx, fy + Math.abs(Math.sin(k.animT * 2)) * -1, false)) { ctx.fillStyle = '#4caf50'; ctx.fillRect(Math.round(fx - 16), Math.round(fy - 20), 32, 20); }
@@ -1540,6 +1697,11 @@ function drawParticles(cx, cy) {
   for (const q of particles) {
     const a = clamp(q.life / q.max, 0, 1);
     if (q.heart) { ctx.globalAlpha = a; drawHeart(q.x - cx, q.y - cy, 1.3, '#ff6b9a'); ctx.globalAlpha = 1; continue; }
+    if (q.soft) { // vaho: nubecitas redondas que crecen y se desvanecen
+      ctx.globalAlpha = a * 0.7; ctx.fillStyle = q.color;
+      ctx.beginPath(); ctx.arc(q.x - cx, q.y - cy, q.size * (1.6 - a * 0.6), 0, Math.PI * 2); ctx.fill();
+      continue;
+    }
     ctx.globalAlpha = a; ctx.fillStyle = q.color;
     ctx.fillRect(Math.round(q.x - cx), Math.round(q.y - cy), q.size, q.size);
   }
@@ -1569,9 +1731,23 @@ function wrapText(str, size, maxW) {
 }
 
 function drawHUD() {
-  for (let i = 0; i < 3; i++) drawHeart(18 + i * 22, 12, 1.6, i < hearts ? '#ff4d6d' : '#4b4b5a'); // salud
-  drawLifeIcon(96, 18, 22);                                                                     // vidas
-  text('x' + SAVE.lives, 110, 19, 10, '#ffffff', 'left');
+  const mh = maxHearts();
+  for (let i = 0; i < mh; i++) { // salud (los corazones extra, de los dorados, llevan borde dorado)
+    const pop = heartPop && heartPop.i === i ? 1 + Math.sin(heartPop.t / 0.6 * Math.PI) * 0.45 : 1;
+    if (i >= BASE_HEARTS) drawHeart(18 + i * 22, 12 - 2.4 * pop, 2.15 * pop, '#ffd23f');
+    drawHeart(18 + i * 22, 12, 1.6 * pop, i < hearts ? '#ff4d6d' : '#4b4b5a');
+  }
+  drawFishMeter(8, 32);
+  const lx = 30 + mh * 22;
+  drawLifeIcon(lx, 18, 22);                                                                     // vidas
+  text('x' + SAVE.lives, lx + 14, 19, 10, '#ffffff', 'left');
+  if (goldPop) { // el corazón dorado sube y se suma a la barra de salud
+    const k = clamp(goldPop.t / 1.2, 0, 1), tx = 18 + (mh - 1) * 22, ty = 12;
+    const x = lerp(VW / 2, tx, k * k), y = lerp(VH / 2 - 30, ty, k * k), s = lerp(5, 1.9, k);
+    ctx.globalAlpha = 1 - clamp((goldPop.t - 1.4) / 0.6, 0, 1);
+    drawHeart(x, y, s, '#ffd23f');
+    ctx.globalAlpha = 1;
+  }
   drawFish({ x: VW - 120 - 8, y: 14 - 7, t: 0, taken: false }, 0, 0);
   text('x' + fishCount + '/' + levelTotalFish(), VW - 104, 15, 10, '#ffd23f', 'left');
   const m = Math.floor(timeT / 60), s = Math.floor(timeT % 60);
@@ -1584,6 +1760,27 @@ function drawHUD() {
     ctx.fillStyle = '#ff6b9a'; ctx.fillRect(VW / 2 - 60, 28, 120 * prog, 5);
   }
   if (msgT > 0) { ctx.globalAlpha = Math.min(1, msgT * 2); text(msg, VW / 2, 70, 11, '#fff3b0'); ctx.globalAlpha = 1; }
+}
+
+// Barra de pescado: se llena con 20 pescados y cura 1 corazón. Llena = reserva (brilla).
+function drawFishMeter(x, y) {
+  const w = 66, k = fishMeter / FISH_PER_HEART, full = fishMeter >= FISH_PER_HEART;
+  ctx.save(); ctx.translate(x + 6, y + 3); ctx.scale(0.6, 0.6);
+  drawFish({ x: -8, y: -7, t: 0, taken: false }, 0, 0);
+  ctx.restore();
+  const bx = x + 16;
+  ctx.fillStyle = '#1b1b2f'; ctx.fillRect(bx - 1, y - 1, w + 2, 7);
+  ctx.fillStyle = '#2c2e5c'; ctx.fillRect(bx, y, w, 5);
+  ctx.fillStyle = full ? `rgba(255,${200 + Math.sin(menuT * 8) * 40},90,1)` : '#ffb703';
+  ctx.fillRect(bx, y, Math.round(w * k), 5);
+  if (full) { // reserva lista: brillo y corazoncito
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    const g = ctx.createRadialGradient(bx + w, y + 2, 1, bx + w, y + 2, 14);
+    g.addColorStop(0, 'rgba(255,170,200,0.7)'); g.addColorStop(1, 'rgba(255,170,200,0)');
+    ctx.fillStyle = g; ctx.fillRect(bx + w - 14, y - 12, 28, 28);
+    ctx.restore();
+    drawHeart(bx + w + 8, y - 2, 0.9 + Math.sin(menuT * 6) * 0.08, '#ff6b9a');
+  }
 }
 
 function overlay(alpha) { ctx.fillStyle = `rgba(10,10,30,${alpha})`; ctx.fillRect(0, 0, VW, VH); }
@@ -1614,12 +1811,15 @@ function drawGameScene() {
   }
   for (const m of AR.moverObjs) drawMover(m, cx, cy);
   drawTiles(cx, cy);
+  drawDecor(cx, cy);
+  drawIcicles(cx, cy);
   if (AR.isRoom) { ctx.fillStyle = AR.style === 'tree' ? 'rgba(60,30,10,0.4)' : 'rgba(20,16,60,0.45)'; ctx.fillRect(0, 0, VW, VH); } // penumbra de la sala
   drawCheckpoint(cx, cy);
   for (const d of AR.doorObjs || []) drawDoor(d, cx, cy);
   drawExitDoor(cx, cy);
   for (const f of AR.fishes) drawFish(f, cx, cy);
   for (const o of AR.oneups) drawOneup(o, cx, cy);
+  drawGoldHeart(AR.goldHeart, cx, cy);
   for (const mu of AR.mushroomObjs) drawMushroom(mu, cx, cy);
   for (const u of AR.urchinObjs) drawUrchin(u, cx, cy);
   for (const g of AR.geyserObjs) drawGeyser(g, cx, cy);
@@ -1630,6 +1830,7 @@ function drawGameScene() {
   drawPlayer(cx, cy);
   drawAcorns(cx, cy);
   drawParticles(cx, cy);
+  drawWolfDarkness();
   drawAmbient(true);
   drawWindHint();
   drawDoorPrompt(cx, cy);
@@ -1653,11 +1854,13 @@ function render(dt) {
   if (state === 'map' || (state === 'settings' && settingsFrom === 'map')) { drawMap(); if (state === 'settings') { overlay(0.5); drawSettings(); } drawSavedBadge(); return; }
   if (state === 'intro') { drawIntro(); return; }
   if (state === 'gameover') { drawGameOver(); return; }
+  if (state === 'ending') { drawEnding(); return; }
   drawGameScene();
   if (state === 'pause') drawPauseMenu();
   if (state === 'settings') { overlay(0.55); drawSettings(); }
   if (state === 'clear') drawLevelClear();
   if (state === 'win' && feed.phase === 'done' && feed.doneT > 0.6) drawResults();
+  if (state === 'choice') drawChoice();
   drawSavedBadge();
 }
 function drawSavedBadge() {

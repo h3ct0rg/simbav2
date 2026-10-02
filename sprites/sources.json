@@ -1,218 +1,432 @@
 {
-  "owner_base": "https://backblaze.pixellab.ai/file/pixellab-characters/a3105ed2-7608-4e57-832f-3042d4343a87",
-  "characters": {
-    "hero": {
-      "id": "9cf92fa4-8c5e-47a5-95e2-ff432540f02d",
-      "outline": "#2b2440",
-      "anims": {
-        "idle": {
-          "anim_id": "f324fb3d-3f3e-4d80-b53a-40a0d316cc85",
-          "count": 8,
-          "fps": 8,
-          "align_feet": true
-        },
-        "run": {
-          "anim_id": "4e47474b-3977-41c3-8b24-abc0ceb40dc0",
-          "count": 8,
-          "fps": 12
-        },
-        "jump": {
-          "anim_id": "7120db71-78cb-4c37-89d3-8637562ee340",
-          "count": 8,
-          "fps": 10
-        }
-      }
+ "owner_base": "https://backblaze.pixellab.ai/file/pixellab-characters/a3105ed2-7608-4e57-832f-3042d4343a87",
+ "characters": {
+  "hero": {
+   "id": "9cf92fa4-8c5e-47a5-95e2-ff432540f02d",
+   "outline": "#2b2440",
+   "anims": {
+    "idle": {
+     "anim_id": "f324fb3d-3f3e-4d80-b53a-40a0d316cc85",
+     "count": 8,
+     "fps": 8,
+     "align_feet": true
     },
-    "mother": {
-      "id": "71c92b45-c37a-4963-bb07-3260db4f075e",
-      "anims": {
-        "idle": {
-          "anim_id": "c3e58855-8342-44b1-9b4f-316c78382cf6",
-          "count": 8,
-          "fps": 6,
-          "align_feet": true
-        }
-      }
+    "run": {
+     "anim_id": "4e47474b-3977-41c3-8b24-abc0ceb40dc0",
+     "count": 8,
+     "fps": 12
     },
-    "dog": {
-      "id": "ec152885-a328-4486-a0f4-fd3758893b74",
-      "anims": {
-        "walk": {
-          "anim_id": "9e87f3b5-70d6-468d-9821-eef70a13ae2e",
-          "count": 6,
-          "fps": 8
-        }
-      }
+    "jump": {
+     "anim_id": "7120db71-78cb-4c37-89d3-8637562ee340",
+     "count": 8,
+     "fps": 10
     },
-    "bruto": {
-      "owner_base": "https://backblaze.pixellab.ai/file/pixellab-characters/c25254bb-ef57-49e6-b342-82e9e2f3527c",
-      "id": "b040deee-3a25-4524-9e26-462f8c4b1a87",
-      "anims": {
-        "charge": {
-          "anim_id": "cd0389aa-f192-438b-9618-a9b078a10886",
-          "count": 6,
-          "fps": 14
-        },
-        "bark": {
-          "anim_id": "01f59d62-7606-4381-8588-12798f8196d1",
-          "count": 6,
-          "fps": 10,
-          "align_feet": true
-        },
-        "idle": {
-          "rotation": "east"
-        }
-      }
-    },
-    "kitten": {
-      "owner_base": "https://backblaze.pixellab.ai/file/pixellab-characters/c25254bb-ef57-49e6-b342-82e9e2f3527c",
-      "id": "f6c38503-8851-40c6-b1ba-95f3640d9a4d",
-      "outline": "#2b2440",
-      "anims": {
-        "sit": {
-          "anim_id": "12a40649-2a9e-4596-9762-be2a3cad51aa",
-          "count": 8,
-          "fps": 5,
-          "align_feet": true
-        }
-      }
+    "lying": {
+     "anim_id": "ba100283-7e53-414d-bd73-aacda221c668",
+     "count": 10,
+     "fps": 5,
+     "align_feet": true
     }
+   }
   },
-  "images": {
-    "bat": {
-      "url": "https://api.pixellab.ai/mcp/images/495be581-3471-47ed-baa1-049465a98642/download"
-    },
-    "rat": {
-      "url": "https://api.pixellab.ai/mcp/images/9166e9b0-1448-45be-9085-5c6db7cb4541/download"
-    },
-    "mother_thin": {
-      "url": "https://api.pixellab.ai/mcp/images/27e44334-faff-4884-a31a-606b44dd0941/download",
-      "palette_from": "raw/mother/rotations/east.png",
-      "slim_variants": [
-        0.55,
-        0.68,
-        0.82
-      ]
-    },
-    "bg": {
-      "url": "https://api.pixellab.ai/mcp/images/a1628ced-964d-42be-b2c3-a401566fb32d/download",
-      "crop": false
-    },
-    "cave_bg": {
-      "url": "https://api.pixellab.ai/mcp/images/eeb7c921-1f92-467d-a132-1590b40608c7/download",
-      "crop": false
-    },
-    "cave_door": {
-      "url": "https://api.pixellab.ai/mcp/images/332c91ed-3c90-42ea-8943-00a549e842b1/download"
-    },
-    "tree_door": {
-      "url": "https://api.pixellab.ai/mcp/images/592c2ac3-d697-4b4a-a471-9634938f2b07/download"
-    },
-    "life_icon": {
-      "url": "https://api.pixellab.ai/mcp/images/7f5bf126-8ccc-457a-b967-677c4c60ee1f/download"
-    },
-    "bg_summer": {
-      "url": "https://api.pixellab.ai/mcp/images/cc66e83c-459b-4a93-9036-b7a72795a4aa/download",
-      "crop": false
-    },
-    "crab": {
-      "url": "https://api.pixellab.ai/mcp/images/f533b6d5-d62d-402c-a4f6-65623bfb0850/download"
-    },
-    "bee": {
-      "url": "https://api.pixellab.ai/mcp/images/4bc0c612-5784-4382-b538-c8ab4c5e270d/download"
-    },
-    "urchin": {
-      "url": "https://api.pixellab.ai/mcp/images/b84cf79c-3f3f-4e0d-850d-9da64066fddb/download"
-    },
-    "turtle": {
-      "url": "https://api.pixellab.ai/mcp/images/65aec335-bd5d-466c-8e61-fb30212856c7/download"
-    },
-    "mushroom": {
-      "url": "https://api.pixellab.ai/mcp/images/3c02962b-4e9a-4385-8116-585d186df880/download"
-    },
-    "log": {
-      "url": "https://api.pixellab.ai/mcp/images/95517e6d-a0a1-48dd-b79e-6ef3743257e8/download"
-    },
-    "bg_autumn": {
-      "url": "https://api.pixellab.ai/mcp/images/f4216667-ee7e-4c0b-9a8c-f89c9978d032/download",
-      "crop": false
-    },
-    "squirrel": {
-      "url": "https://api.pixellab.ai/mcp/images/c790aae9-e52f-4444-af00-506ce5abbe17/download"
-    },
-    "boar": {
-      "url": "https://api.pixellab.ai/mcp/images/f9e27861-7ea6-4549-9709-a1708676e496/download"
-    },
-    "hedgehog": {
-      "url": "https://api.pixellab.ai/mcp/images/0f847348-64b6-4eae-bf10-27154939807f/download"
-    },
-    "leaf_raft": {
-      "url": "https://api.pixellab.ai/mcp/images/da633eb6-31c5-40d0-b5b3-4830f958eaa8/download"
-    },
-    "boss_squirrel": {
-      "url": "https://api.pixellab.ai/mcp/images/eec15ccd-50c9-4b37-ae7f-7c17330271d8/download"
+  "mother": {
+   "id": "71c92b45-c37a-4963-bb07-3260db4f075e",
+   "anims": {
+    "idle": {
+     "anim_id": "c3e58855-8342-44b1-9b4f-316c78382cf6",
+     "count": 8,
+     "fps": 6,
+     "align_feet": true
     }
+   }
   },
-  "tilesets": {
-    "tiles": {
-      "image": "raw/tileset.png",
-      "meta": "raw/tileset_meta.json"
-    },
-    "tiles_summer": {
-      "image": "raw/tileset_summer.png",
-      "meta": "raw/tileset_summer_meta.json"
-    },
-    "tiles_autumn": {
-      "recolor_from": "tiles",
-      "note": "el tileset generado (raw/tileset_autumn.png) salió con fondo opaco y ladrillos; se recolorea el de primavera"
+  "dog": {
+   "id": "ec152885-a328-4486-a0f4-fd3758893b74",
+   "anims": {
+    "walk": {
+     "anim_id": "9e87f3b5-70d6-468d-9821-eef70a13ae2e",
+     "count": 6,
+     "fps": 8
     }
+   }
   },
-  "frame_sets": {
-    "boss_crab": {
-      "source": "animate_image 6eab74b0-7413-418e-b7c0-0e9ed5ac95d4 sobre la imagen 802721c2 (pinzas en alto)",
-      "anims": {
-        "idle": {
-          "files": [
-            "raw/crab_slam/0.png"
-          ]
-        },
-        "slam": {
-          "files": [
-            "raw/crab_slam/1.png",
-            "raw/crab_slam/2.png",
-            "raw/crab_slam/3.png",
-            "raw/crab_slam/4.png",
-            "raw/crab_slam/5.png",
-            "raw/crab_slam/6.png",
-            "raw/crab_slam/7.png",
-            "raw/crab_slam/8.png"
-          ],
-          "fps": 30
-        },
-        "stuck": {
-          "files": [
-            "raw/crab_slam/8.png"
-          ]
-        }
-      }
+  "bruto": {
+   "owner_base": "https://backblaze.pixellab.ai/file/pixellab-characters/c25254bb-ef57-49e6-b342-82e9e2f3527c",
+   "id": "b040deee-3a25-4524-9e26-462f8c4b1a87",
+   "anims": {
+    "charge": {
+     "anim_id": "cd0389aa-f192-438b-9618-a9b078a10886",
+     "count": 6,
+     "fps": 14
     },
-    "boss_squirrel_eat": {
-      "source": "animate_image 8ebc52dd-d1a6-4515-b17d-27872c6f4986 sobre la imagen de Doña Bellota",
-      "anims": {
-        "eat": {
-          "files": [
-            "raw/squirrel_eat/1.png",
-            "raw/squirrel_eat/2.png",
-            "raw/squirrel_eat/3.png",
-            "raw/squirrel_eat/4.png",
-            "raw/squirrel_eat/5.png",
-            "raw/squirrel_eat/6.png",
-            "raw/squirrel_eat/7.png",
-            "raw/squirrel_eat/8.png"
-          ],
-          "fps": 6
-        }
-      }
+    "bark": {
+     "anim_id": "01f59d62-7606-4381-8588-12798f8196d1",
+     "count": 6,
+     "fps": 10,
+     "align_feet": true
+    },
+    "idle": {
+     "rotation": "east"
     }
+   }
+  },
+  "kitten": {
+   "owner_base": "https://backblaze.pixellab.ai/file/pixellab-characters/c25254bb-ef57-49e6-b342-82e9e2f3527c",
+   "id": "f6c38503-8851-40c6-b1ba-95f3640d9a4d",
+   "outline": "#2b2440",
+   "anims": {
+    "sit": {
+     "anim_id": "12a40649-2a9e-4596-9762-be2a3cad51aa",
+     "count": 8,
+     "fps": 5,
+     "align_feet": true
+    }
+   }
+  },
+  "wolf": {
+   "owner_base": "https://backblaze.pixellab.ai/file/pixellab-characters/fc23e9ec-b616-4bfb-b968-596ce2715043",
+   "id": "93175400-2f9f-4ee3-a97e-9c0f6defca49",
+   "anims": {
+    "idle": {
+     "rotation": "east"
+    },
+    "run": {
+     "anim_id": "902cb04a-d550-4b00-806b-30ddce9779f1",
+     "count": 6,
+     "fps": 14,
+     "align_feet": false
+    },
+    "howl": {
+     "anim_id": "8ab7587a-c71b-4bf6-a16f-00aea2120b92",
+     "count": 6,
+     "fps": 7,
+     "align_feet": true
+    },
+    "sad": {
+     "anim_id": "f670ffa5-6877-4aa3-a4d1-23705c003822",
+     "count": 4,
+     "fps": 5,
+     "align_feet": true
+    },
+    "front": {
+     "rotation": "south"
+    }
+   },
+   "outline": "#2b2440"
+  },
+  "cub": {
+   "owner_base": "https://backblaze.pixellab.ai/file/pixellab-characters/fc23e9ec-b616-4bfb-b968-596ce2715043",
+   "id": "76745694-597f-484c-97e0-6c95c5e50332",
+   "outline": "#2b2440",
+   "anims": {
+    "idle": {
+     "rotation": "east"
+    },
+    "run": {
+     "anim_id": "6d5445b6-cea8-4ce3-8320-fce2cb1efc31",
+     "count": 6,
+     "fps": 12,
+     "align_feet": false
+    },
+    "front": {
+     "rotation": "south"
+    }
+   }
   }
+ },
+ "images": {
+  "bat": {
+   "url": "https://api.pixellab.ai/mcp/images/495be581-3471-47ed-baa1-049465a98642/download"
+  },
+  "rat": {
+   "url": "https://api.pixellab.ai/mcp/images/9166e9b0-1448-45be-9085-5c6db7cb4541/download"
+  },
+  "mother_thin": {
+   "url": "https://api.pixellab.ai/mcp/images/27e44334-faff-4884-a31a-606b44dd0941/download",
+   "palette_from": "raw/mother/rotations/east.png",
+   "slim_variants": [
+    0.55,
+    0.68,
+    0.82
+   ]
+  },
+  "bg": {
+   "url": "https://api.pixellab.ai/mcp/images/a1628ced-964d-42be-b2c3-a401566fb32d/download",
+   "crop": false
+  },
+  "cave_bg": {
+   "url": "https://api.pixellab.ai/mcp/images/eeb7c921-1f92-467d-a132-1590b40608c7/download",
+   "crop": false
+  },
+  "cave_door": {
+   "url": "https://api.pixellab.ai/mcp/images/332c91ed-3c90-42ea-8943-00a549e842b1/download"
+  },
+  "tree_door": {
+   "url": "https://api.pixellab.ai/mcp/images/592c2ac3-d697-4b4a-a471-9634938f2b07/download"
+  },
+  "life_icon": {
+   "url": "https://api.pixellab.ai/mcp/images/7f5bf126-8ccc-457a-b967-677c4c60ee1f/download"
+  },
+  "bg_summer": {
+   "url": "https://api.pixellab.ai/mcp/images/cc66e83c-459b-4a93-9036-b7a72795a4aa/download",
+   "crop": false
+  },
+  "crab": {
+   "url": "https://api.pixellab.ai/mcp/images/f533b6d5-d62d-402c-a4f6-65623bfb0850/download"
+  },
+  "bee": {
+   "url": "https://api.pixellab.ai/mcp/images/4bc0c612-5784-4382-b538-c8ab4c5e270d/download"
+  },
+  "urchin": {
+   "url": "https://api.pixellab.ai/mcp/images/b84cf79c-3f3f-4e0d-850d-9da64066fddb/download"
+  },
+  "turtle": {
+   "url": "https://api.pixellab.ai/mcp/images/65aec335-bd5d-466c-8e61-fb30212856c7/download"
+  },
+  "mushroom": {
+   "url": "https://api.pixellab.ai/mcp/images/3c02962b-4e9a-4385-8116-585d186df880/download"
+  },
+  "log": {
+   "url": "https://api.pixellab.ai/mcp/images/95517e6d-a0a1-48dd-b79e-6ef3743257e8/download"
+  },
+  "bg_autumn": {
+   "url": "https://api.pixellab.ai/mcp/images/f4216667-ee7e-4c0b-9a8c-f89c9978d032/download",
+   "crop": false
+  },
+  "squirrel": {
+   "url": "https://api.pixellab.ai/mcp/images/c790aae9-e52f-4444-af00-506ce5abbe17/download"
+  },
+  "boar": {
+   "url": "https://api.pixellab.ai/mcp/images/f9e27861-7ea6-4549-9709-a1708676e496/download"
+  },
+  "hedgehog": {
+   "url": "https://api.pixellab.ai/mcp/images/0f847348-64b6-4eae-bf10-27154939807f/download"
+  },
+  "leaf_raft": {
+   "url": "https://api.pixellab.ai/mcp/images/da633eb6-31c5-40d0-b5b3-4830f958eaa8/download"
+  },
+  "boss_squirrel": {
+   "url": "https://api.pixellab.ai/mcp/images/eec15ccd-50c9-4b37-ae7f-7c17330271d8/download"
+  },
+  "bg_winter": {
+   "url": "https://api.pixellab.ai/mcp/images/b7b56a95-3e3b-41bb-9959-97773e82a0b6/download",
+   "crop": false
+  },
+  "village": {
+   "url": "https://api.pixellab.ai/mcp/images/651ac7ee-bfe6-416a-a924-6683b047f5e8/download",
+   "key_bg": true,
+   "lights": [
+    "color",
+    "warm"
+   ]
+  },
+  "xmas_tree": {
+   "url": "https://api.pixellab.ai/mcp/images/32982c7e-3310-440b-91a6-4b4956d7bf9a/download",
+   "lights": [
+    "color"
+   ]
+  },
+  "candy_cane": {
+   "url": "https://api.pixellab.ai/mcp/images/334ad650-6eaa-40b7-9341-d90e4bc84d90/download"
+  },
+  "gifts": {
+   "url": "https://api.pixellab.ai/mcp/images/fe026e10-8646-4ca5-99f6-3229b8651d8f/download"
+  },
+  "lamp": {
+   "url": "https://api.pixellab.ai/mcp/images/2e521a4e-ed7d-4411-b3eb-52057927f9a8/download"
+  },
+  "thin_ice": {
+   "url": "https://api.pixellab.ai/mcp/images/25cd1235-8f31-4cc1-ae87-d3922bea0d5c/download"
+  },
+  "icicle": {
+   "url": "https://api.pixellab.ai/mcp/images/ebaeb4f9-82c2-47fa-8f65-9152b3c98474/download"
+  },
+  "sleigh": {
+   "url": "https://api.pixellab.ai/mcp/images/a996a933-d5fd-4895-b6a3-88e65918f16b/download"
+  },
+  "snowman": {
+   "url": "https://api.pixellab.ai/mcp/images/dec34330-27e4-4325-8975-d044782b3953/download"
+  },
+  "penguin": {
+   "url": "https://api.pixellab.ai/mcp/images/d704399a-e8ab-40b0-b2af-a74485de3c70/download"
+  },
+  "elf": {
+   "url": "https://api.pixellab.ai/mcp/images/f31a4368-6bfc-4b8a-b34c-42c5cf6d11aa/download"
+  },
+  "house": {
+   "url": "https://api.pixellab.ai/mcp/images/90e798e5-3d31-4ce4-b0fa-55ce48889bc4/download",
+   "lights": [
+    "color",
+    "warm"
+   ]
+  },
+  "interior": {
+   "url": "https://api.pixellab.ai/mcp/images/147d9b2a-8c09-418e-95c6-2b488d064d01/download",
+   "crop": false,
+   "lights": [
+    "color"
+   ]
+  },
+  "mom_lying": {
+   "url": "https://api.pixellab.ai/mcp/images/5699a24a-01aa-4784-9b13-6d7271167ba9/download"
+  },
+  "hero_lying": {
+   "url": "https://api.pixellab.ai/mcp/images/8e5abdc5-4273-4b09-ac70-e8f9567d4cec/download",
+   "palette_from": "raw/hero/rotations/east.png"
+  }
+ },
+ "tilesets": {
+  "tiles": {
+   "image": "raw/tileset.png",
+   "meta": "raw/tileset_meta.json"
+  },
+  "tiles_summer": {
+   "image": "raw/tileset_summer.png",
+   "meta": "raw/tileset_summer_meta.json"
+  },
+  "tiles_autumn": {
+   "recolor_from": "tiles",
+   "note": "el tileset generado (raw/tileset_autumn.png) salió con fondo opaco y ladrillos; se recolorea el de primavera"
+  },
+  "tiles_winter": {
+   "recolor_from": "tiles",
+   "style": "winter",
+   "note": "el tileset generado (raw/tileset_winter.png) salió como ladrillos de hielo muy llamativos; se recolorea el de primavera (nieve sobre tierra helada)"
+  }
+ },
+ "frame_sets": {
+  "boss_crab": {
+   "source": "animate_image 6eab74b0-7413-418e-b7c0-0e9ed5ac95d4 sobre la imagen 802721c2 (pinzas en alto)",
+   "anims": {
+    "idle": {
+     "files": [
+      "raw/crab_slam/0.png"
+     ]
+    },
+    "slam": {
+     "files": [
+      "raw/crab_slam/1.png",
+      "raw/crab_slam/2.png",
+      "raw/crab_slam/3.png",
+      "raw/crab_slam/4.png",
+      "raw/crab_slam/5.png",
+      "raw/crab_slam/6.png",
+      "raw/crab_slam/7.png",
+      "raw/crab_slam/8.png"
+     ],
+     "fps": 30
+    },
+    "stuck": {
+     "files": [
+      "raw/crab_slam/8.png"
+     ]
+    }
+   }
+  },
+  "boss_squirrel_eat": {
+   "source": "animate_image 8ebc52dd-d1a6-4515-b17d-27872c6f4986 sobre la imagen de Doña Bellota",
+   "anims": {
+    "eat": {
+     "files": [
+      "raw/squirrel_eat/1.png",
+      "raw/squirrel_eat/2.png",
+      "raw/squirrel_eat/3.png",
+      "raw/squirrel_eat/4.png",
+      "raw/squirrel_eat/5.png",
+      "raw/squirrel_eat/6.png",
+      "raw/squirrel_eat/7.png",
+      "raw/squirrel_eat/8.png"
+     ],
+     "fps": 6
+    }
+   }
+  },
+  "sleigh_fly": {
+   "source": "animate_image d9bb6f75-ffcc-4a00-92d2-d5171f5071ed",
+   "anims": {
+    "fly": {
+     "files": [
+      "raw/sleigh_fly/0.png",
+      "raw/sleigh_fly/1.png",
+      "raw/sleigh_fly/2.png",
+      "raw/sleigh_fly/3.png",
+      "raw/sleigh_fly/4.png",
+      "raw/sleigh_fly/5.png",
+      "raw/sleigh_fly/6.png",
+      "raw/sleigh_fly/7.png",
+      "raw/sleigh_fly/8.png"
+     ],
+     "fps": 10
+    }
+   }
+  },
+  "snowman_throw": {
+   "source": "animate_image b7c27d85-e223-4b04-8e7f-eb1656dc9fb9",
+   "anims": {
+    "idle": {
+     "files": [
+      "raw/snowman_throw/0.png"
+     ]
+    },
+    "throw": {
+     "files": [
+      "raw/snowman_throw/1.png",
+      "raw/snowman_throw/2.png",
+      "raw/snowman_throw/3.png",
+      "raw/snowman_throw/4.png",
+      "raw/snowman_throw/5.png",
+      "raw/snowman_throw/6.png"
+     ],
+     "fps": 12
+    }
+   }
+  },
+  "elf_wave": {
+   "source": "animate_image fb576ad0-e5cc-425e-b157-cdc7793f5b80",
+   "anims": {
+    "wave": {
+     "files": [
+      "raw/elf_wave/0.png",
+      "raw/elf_wave/1.png",
+      "raw/elf_wave/2.png",
+      "raw/elf_wave/3.png",
+      "raw/elf_wave/4.png",
+      "raw/elf_wave/5.png",
+      "raw/elf_wave/6.png"
+     ],
+     "fps": 7
+    }
+   }
+  },
+  "mother_walk": {
+   "source": "animate_image 434aa380-0d22-46d2-b547-050adee318ec sobre la rotación east de mamá",
+   "anims": {
+    "walk": {
+     "files": [
+      "raw/mother_walk/1.png",
+      "raw/mother_walk/2.png",
+      "raw/mother_walk/3.png",
+      "raw/mother_walk/4.png",
+      "raw/mother_walk/5.png",
+      "raw/mother_walk/6.png",
+      "raw/mother_walk/7.png",
+      "raw/mother_walk/8.png"
+     ],
+     "fps": 9
+    }
+   }
+  }
+ },
+ "cutouts": {
+  "interior_window": {
+   "from": "interior",
+   "box": [
+    160,
+    26,
+    245,
+    140
+   ],
+   "note": "ventana del salón sin el vidrio: se dibuja delante de la familia de lobos"
+  }
+ }
 }

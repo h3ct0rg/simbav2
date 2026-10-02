@@ -20,6 +20,15 @@
 //      · si Simba la interrumpe saltándole encima → no se cura y queda aturdida
 //      · si no → recupera la mitad de su vida y entra en la FASE FINAL
 //        (lluvia de bellotas y viento más fuerte). Solo ocurre una vez por pelea.
+//
+//  Mundo 4 · El Lobo de las Nieves (jefe final, "segundo aliento" al estilo souls)
+//    FASE 1 (4 golpes): AVISO (gruñe, se agacha) → EMBESTIDA sobre el hielo → choca contra
+//    la pared → caen carámbanos del techo (con sombra de aviso) → ATURDIDO (¡ahora!)
+//    Al llegar a 0 cae rendido... y AÚLLA: la pantalla se oscurece, empieza la ventisca
+//    y su barra se rellena.
+//    FASE 2 (3 golpes): alterna embestida y SALTO sobre Simba (marca en el suelo), ráfagas
+//    de ventisca y lluvia de carámbanos. Si Simba pierde una vida, la pelea vuelve a la FASE 1.
+//    Al vencerlo queda agotado: "Solo quería algo de comer..." → elección (ending.js).
 // ============================================================
 
 let boss = null, arena = null, waves = [];
@@ -54,6 +63,21 @@ const BOSS_DEFS = {
     final: { throwGap: 0.7, stun: 1.8, rain: true },
     vulnerable: 'dizzy',
   },
+  wolf: {
+    name: 'LOBO DE LAS NIEVES', w: 100, h: 62, hp: 4, custom: true,
+    phases: [ // fase 1, por golpes recibidos: 0..3
+      { speed: 300, tell: 0.9, stun: 2.4, bounces: 0, drops: 3 },
+      { speed: 330, tell: 0.8, stun: 2.2, bounces: 0, drops: 3 },
+      { speed: 360, tell: 0.7, stun: 2.0, bounces: 1, drops: 4 },
+      { speed: 380, tell: 0.65, stun: 1.9, bounces: 1, drops: 4 },
+    ],
+    second: [ // fase 2 ("segundo aliento"), por golpes recibidos: 0..2
+      { speed: 400, tell: 0.65, stun: 1.8, bounces: 1, drops: 5, pounceStun: 1.5, rain: 2.0 },
+      { speed: 420, tell: 0.6, stun: 1.7, bounces: 1, drops: 5, pounceStun: 1.4, rain: 1.7 },
+      { speed: 440, tell: 0.55, stun: 1.6, bounces: 1, drops: 6, pounceStun: 1.3, rain: 1.45 },
+    ],
+    vulnerable: 'dazed',
+  },
 };
 
 function setupBoss(area) {
@@ -61,6 +85,12 @@ function setupBoss(area) {
   if (!area.boss || !area.arena) return;
   arena = { left: area.arena.left, right: area.arena.right, active: false, done: false };
   boss = makeBoss(area.boss, LV.world.boss || 'bruto');
+  arena.orig = {}; // columnas originales de las paredes (la guarida del lobo tiene techo)
+  for (const c of [arena.left, arena.right]) arena.orig[c] = area.grid.map(row => row[c]);
+  if (boss.type === 'wolf') { // carámbanos colgando del techo de la guarida: caen cuando el lobo choca
+    const ceil = c => { let r = 0; while (r < area.groundRow && area.grid[r][c] === SOLID) r++; return r; };
+    for (let c = arena.left + 2; c <= arena.right - 2; c += 2) if (ceil(c) > 0) area.icicleObjs.push(makeIcicle(c * TS + TS / 2, ceil(c) * TS, true));
+  }
 }
 function makeBoss(spawn, type) {
   const def = BOSS_DEFS[type];
@@ -68,22 +98,27 @@ function makeBoss(spawn, type) {
     vx: 0, vy: 0, dir: -1, hp: def.hp || 3, maxHp: def.hp || 3, state: 'wait', t: 0, invuln: 0, flash: 0, animT: 0,
     bounces: 0, slams: 0, onGround: false, hitWall: 0, canHeal: true, final: false, throwT: 1 };
 }
-const bossPhase = () => (boss.final ? boss.def.final : boss.def.phases[Math.min(boss.def.phases.length - 1, boss.maxHp - boss.hp)]);
+const bossPhase = () => {
+  const list = boss.second ? boss.def.second : boss.def.phases;
+  return boss.final ? boss.def.final : list[clamp(boss.maxHp - boss.hp, 0, list.length - 1)];
+};
 const bossCleared = () => !arena || arena.done;
-const bossBarVisible = () => arena && arena.active && boss && boss.state !== 'gone';
+const bossBarVisible = () => arena && arena.active && !arena.done && boss && !['gone', 'choice', 'sit', 'leave', 'sadwalk'].includes(boss.state);
 function arenaCameraLock() {
   if (!arena || !arena.active || arena.done || AR !== MAIN) return null;
   return arena.left * TS + ((arena.right - arena.left + 1) * TS - VW) / 2;
 }
 function setArenaWall(col, solid) {
-  for (let r = 0; r < MAIN.groundRow; r++) MAIN.grid[r][col] = solid ? SOLID : 0;
+  const orig = arena && arena.orig && arena.orig[col];
+  for (let r = 0; r < MAIN.groundRow; r++) MAIN.grid[r][col] = solid ? SOLID : orig ? orig[r] : 0;
 }
 // Al morir durante la pelea, todo vuelve a empezar (el punto de control está justo antes)
 function resetBossFight() {
   if (!arena || arena.done) return;
   setArenaWall(arena.left, false); setArenaWall(arena.right, false);
   arena.active = false; waves = []; acorns = [];
-  boss = makeBoss(boss.spawn, boss.type);
+  boss = makeBoss(boss.spawn, boss.type); // el lobo vuelve a la FASE 1 con la vida llena
+  for (const ic of MAIN.icicleObjs || []) if (ic.arena) { ic.st = 'hang'; ic.y = ic.y0; ic.grow = 1; }
 }
 
 function bossSet(st) { boss.state = st; boss.t = 0; }
@@ -98,13 +133,14 @@ function updateArena(dt) {
     setArenaWall(arena.left, true); setArenaWall(arena.right, true);
     bossSet('intro'); faceSimba();
     flash(t('boss_name_' + boss.type), 2.2); shake = 6;
-    boss.type === 'bruto' ? SFX.bark() : boss.type === 'crab' ? SFX.thud() : SFX.squeak();
+    boss.type === 'bruto' ? SFX.bark() : boss.type === 'crab' ? SFX.thud() : boss.type === 'wolf' ? SFX.howl() : SFX.squeak();
   }
   if (boss && boss.state !== 'wait' && boss.state !== 'gone') {
     boss.t += dt; boss.animT += dt;
     boss.invuln = Math.max(0, boss.invuln - dt);
     boss.flash = Math.max(0, boss.flash - dt * 3);
-    if (boss.def.custom) updateSquirrelBoss(dt); // física y contacto propios
+    if (boss.type === 'wolf') updateWolfBoss(dt);
+    else if (boss.def.custom) updateSquirrelBoss(dt); // física y contacto propios
     else {
       if (boss.type === 'bruto') updateBruto(dt); else updateCrab(dt);
       boss.vy = Math.min(boss.vy + GRAV * dt, MAXFALL);
@@ -112,7 +148,7 @@ function updateArena(dt) {
       moveY(boss, boss.vy * dt);
       bossContact();
     }
-    bossCommonStates();
+    if (boss.type !== 'wolf') bossCommonStates(); // el lobo no huye: termina en la escena de la elección
   }
   updateWaves(dt);
 }
@@ -231,7 +267,7 @@ function updateWaves(dt) {
   for (const w of waves) {
     w.t += dt; w.x += w.dir * w.speed * dt;
     if (w.x < (arena.left + 1) * TS || w.x > arena.right * TS) w.dead = true;
-    if (Math.random() < dt * 30) puff(w.x, w.y - 4, 1, '#f2d16b', 20, 30, 0.3, 3);
+    if (Math.random() < dt * 30) puff(w.x, w.y - 4, 1, w.snow ? '#ffffff' : '#f2d16b', 20, 30, 0.3, 3);
     // la onda tiene ~20 px de alto: basta con saltarla
     if (state === 'play' && overlap(player, { x: w.x - 12, y: w.y - 20, w: 24, h: 20 })) hurtPlayer(w.x);
   }
@@ -338,6 +374,141 @@ function squirrelContact() {
   else hurtPlayer(b.x + b.w / 2);
 }
 
+// ---------- El Lobo de las Nieves ----------
+const blizzardOn = () => !!(boss && boss.type === 'wolf' && boss.second && arena && arena.active && !arena.done && !['defeated', 'choice'].includes(boss.state));
+function wolfPhys(dt) {
+  const b = boss;
+  b.vy = Math.min(b.vy + GRAV * dt, MAXFALL);
+  moveX(b, b.vx * dt); moveY(b, b.vy * dt);
+}
+// caen carámbanos del techo: los más cercanos a Simba primero, con un poco de azar
+function dropIcicles(n, shakeTime) {
+  const px = player.x + player.w / 2;
+  const list = (MAIN.icicleObjs || []).filter(ic => ic.arena && ic.st === 'hang')
+    .sort((a, c) => Math.abs(a.x - px) + Math.random() * 120 - (Math.abs(c.x - px) + Math.random() * 120));
+  list.slice(0, n).forEach((ic, i) => { triggerIcicle(ic, (shakeTime || 0.6) + i * 0.12); });
+}
+function wolfLand() { // aterrizaje del salto: nieve y ondas por el suelo
+  const b = boss;
+  shake = 8; SFX.thud();
+  puff(b.x + b.w / 2, b.y + b.h, 26, '#ffffff', 130, 70, 0.6, 4);
+  waves.push({ x: b.x - 6, y: b.y + b.h, dir: -1, speed: 230, t: 0, snow: true });
+  waves.push({ x: b.x + b.w + 6, y: b.y + b.h, dir: 1, speed: 230, t: 0, snow: true });
+}
+function updateWolfBoss(dt) {
+  const b = boss, ph = bossPhase(), p = player;
+  b.dark = lerp(b.dark || 0, b.second || b.state === 'rise' ? 1 : 0, Math.min(1, dt * (b.state === 'rise' ? 1.2 : 3)));
+  switch (b.state) {
+    case 'intro': b.vx = 0; if (b.t > 1.8) { bossSet('tell'); SFX.growl(); } break;
+    case 'tell': // AVISO: se agacha y gruñe mirando a Simba
+      b.vx = 0; faceSimba();
+      if (b.t > ph.tell) {
+        if (b.second && b.nextPounce) { bossSet('crouch'); b.target = clamp(p.x + p.w / 2, (arena.left + 2) * TS, arena.right * TS - TS); }
+        else { bossSet('charge'); b.bounces = ph.bounces; }
+        b.nextPounce = !b.nextPounce;
+      }
+      break;
+    case 'charge': // embestida: sobre el hielo no puede frenar
+      b.vx = b.dir * ph.speed;
+      if (Math.random() < dt * 30) puff(b.x + b.w / 2 - b.dir * 30, b.y + b.h, 1, '#e6f8ff', 30, 20, 0.35, 3);
+      if (b.hitWall) {
+        shake = 10; SFX.thud();
+        puff(b.dir > 0 ? b.x + b.w : b.x, b.y + b.h / 2, 18, '#ffffff', 80, 80, 0.5, 4);
+        dropIcicles(ph.drops);
+        if (b.bounces > 0) { b.bounces--; b.dir = -b.dir; bossSet('skid'); } else { bossSet('dazed'); b.stunFor = ph.stun; }
+      }
+      break;
+    case 'skid': b.vx = b.dir * ph.speed * 0.3; if (b.t > 0.4) { bossSet('charge'); b.bounces = 0; } break;
+    case 'crouch': b.vx = 0; // fase 2: marca el sitio y salta
+      if (b.t > 0.55) {
+        bossSet('pounce'); SFX.growl();
+        b.jump = { x0: b.x, y0: b.y, x1: clamp(b.target - b.w / 2, (arena.left + 1) * TS, arena.right * TS - b.w), y1: b.y, t: 0, dur: 0.85 };
+        b.dir = b.jump.x1 > b.x ? 1 : -1;
+      }
+      break;
+    case 'pounce': {
+      const j = b.jump; j.t += dt; const u = clamp(j.t / j.dur, 0, 1);
+      b.x = lerp(j.x0, j.x1, u); b.y = j.y0 - Math.sin(u * Math.PI) * 120;
+      if (u >= 1) { b.y = j.y0; b.jump = null; wolfLand(); bossSet('dazed'); b.stunFor = ph.pounceStun; }
+      break;
+    }
+    case 'dazed': b.vx = 0; if (b.t > b.stunFor) bossSet('recover'); break; // ¡ahora!
+    case 'hurt': b.vx = 0;
+      if (b.t > 0.6) {
+        if (b.hp > 0) bossSet('recover');
+        else if (!b.second) { bossSet('down'); SFX.whimper(); }
+        else { bossSet('defeated'); SFX.whimper(); }
+      }
+      break;
+    case 'recover': b.vx = 0; if (b.t > 0.45) { bossSet('tell'); SFX.growl(); } break;
+    case 'down': b.vx = 0; // cae rendido... ¿se acabó?
+      if (b.t > 1.8) { bossSet('rise'); SFX.howl(); shake = 6; flash(t('boss_second_wolf'), 2.8); }
+      break;
+    case 'rise': // SEGUNDO ALIENTO: aúlla, oscurece, ventisca y la barra se rellena
+      b.vx = 0;
+      b.refill = clamp(b.t / 2.2, 0, 1);
+      if (b.t > 2.4) {
+        b.second = true; b.maxHp = b.def.second.length; b.hp = b.maxHp; b.refill = 0; b.flash = 1;
+        b.nextPounce = false; b.rainT = 1.5; wind.t = 1.5;
+        bossSet('tell'); SFX.growl();
+      }
+      break;
+    case 'defeated': // agotado: empieza la escena de la elección
+      b.vx = 0;
+      if (b.t > 1.3 && state === 'play') startWolfChoice();
+      break;
+  }
+  if (b.second && ['tell', 'charge', 'skid', 'crouch', 'pounce', 'dazed', 'recover'].includes(b.state)) { // lluvia de carámbanos
+    b.rainT -= dt;
+    if (b.rainT <= 0) { b.rainT = ph.rain; dropIcicles(1, 0.55); }
+  }
+  if (b.state !== 'pounce' && b.state !== 'choice') wolfPhys(dt);
+  wolfContact();
+}
+function wolfContact() {
+  const b = boss, p = player;
+  if (state !== 'play' || ['down', 'rise', 'defeated', 'choice', 'gone'].includes(b.state)) {
+    if (overlap(p, b) && state === 'play') p.x += (p.x + p.w / 2 < b.x + b.w / 2 ? -1 : 1) * 2; // no hace daño: solo empuja
+    return;
+  }
+  bossContact();
+}
+function drawWolfDarkness() {
+  if (!boss || boss.type !== 'wolf' || AR !== MAIN || !(boss.dark > 0.01) || (arena && arena.done)) return;
+  const k = boss.dark;
+  ctx.fillStyle = `rgba(8,12,40,${0.5 * k})`; ctx.fillRect(0, 0, VW, VH);
+  const g = ctx.createRadialGradient(VW / 2, VH / 2, 120, VW / 2, VH / 2, 380);
+  g.addColorStop(0, 'rgba(0,0,20,0)'); g.addColorStop(1, `rgba(0,0,20,${0.55 * k})`);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
+  if (boss.state === 'rise') { // ojos que brillan en la oscuridad
+    const ex = boss.x + boss.w / 2 + boss.dir * 30 - camX, ey = boss.y + 14 - camY;
+    glowDot(ex, ey, '#8fe3ff', 10 + Math.sin(boss.t * 12) * 3);
+  }
+}
+const WOLF_SCALE = 0.72; // el sprite generado es grande (172 px): se dibuja reducido
+function drawWolfSprite(b, fx, fy, blink) {
+  const run = anim(A.wolf, 'run'), howl = anim(A.wolf, 'howl'), sad = anim(A.wolf, 'sad'), idle = anim(A.wolf, 'idle');
+  let f = idle && idle.frames[0], sx = 1, sy = 1;
+  const st = b.state;
+  if (st === 'charge' || st === 'skid' || st === 'flee' || st === 'leave') f = run && frameAt(run, b.animT, 14);
+  else if (st === 'sadwalk') { f = run && frameAt(run, b.animT, 5); sy = 0.94; } // se aleja despacio, cabizbajo
+  else if (st === 'sit') f = idle && idle.frames[0];
+  else if (st === 'pounce') f = run && run.frames[2 % run.frames.length];
+  else if (st === 'intro' || st === 'rise') f = howl ? howl.frames[Math.min(howl.frames.length - 1, Math.floor(b.t * 4) % (howl.frames.length + 3))] : f;
+  else if (st === 'down' || st === 'defeated' || st === 'choice') {
+    f = sad ? sad.frames[Math.min(sad.frames.length - 1, Math.floor((b.lieT !== undefined ? b.lieT : b.t) * 5))] : f;
+    if (!sad) { sy = 0.7; sx = 1.1; }
+  } else if (st === 'tell' || st === 'crouch') { sy = 0.9; sx = 1.05; f = idle && idle.frames[0]; }
+  if (!drawFrame(f, fx, fy, b.dir < 0, sx * WOLF_SCALE, sy * WOLF_SCALE, blink ? 0.35 : 1)) {
+    ctx.fillStyle = '#dfe8f2'; ctx.fillRect(Math.round(fx - b.w / 2), Math.round(fy - b.h * sy), b.w, b.h * sy);
+  }
+  if (st === 'crouch' || st === 'pounce') { // marca donde va a caer
+    const tx = (b.jump ? b.jump.x1 + b.w / 2 : b.target) - camX, ty = MAIN.groundRow * TS - camY;
+    ctx.strokeStyle = `rgba(255,90,90,${0.6 + Math.sin(menuT * 20) * 0.3})`; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(tx, ty - 2, 26, 6, 0, 0, Math.PI * 2); ctx.stroke();
+  }
+}
+
 // ---------- Bellotas (ardillas enemigas y Doña Bellota) ----------
 let acorns = [];
 // Lanza una bellota en arco que cae cerca de Simba en `T` segundos
@@ -350,10 +521,10 @@ function updateAcorns(dt) {
   for (const a of acorns) {
     a.vy += (a.g || 900) * dt; a.x += a.vx * dt; a.y += a.vy * dt; a.rot = (a.rot || 0) + dt * 10;
     if (tile(Math.floor(a.x / TS), Math.floor((a.y + a.r) / TS)) === SOLID || a.y > ROWS * TS + 20) {
-      a.dead = true; puff(a.x, a.y, 6, '#8b5a2b', 50, 50, 0.35, 3);
+      a.dead = true; puff(a.x, a.y, a.snow ? 10 : 6, a.snow ? '#ffffff' : '#8b5a2b', 50, 50, 0.35, 3);
     }
     if (!a.dead && state === 'play' && overlap(player, { x: a.x - a.r, y: a.y - a.r, w: a.r * 2, h: a.r * 2 })) {
-      a.dead = true; hurtPlayer(a.x); puff(a.x, a.y, 6, '#8b5a2b', 50, 50, 0.35, 3);
+      a.dead = true; hurtPlayer(a.x); puff(a.x, a.y, a.snow ? 10 : 6, a.snow ? '#ffffff' : '#8b5a2b', 50, 50, 0.35, 3);
     }
   }
   acorns = acorns.filter(a => !a.dead);
@@ -361,6 +532,12 @@ function updateAcorns(dt) {
 function drawAcorns(cx, cy) {
   for (const a of acorns) {
     const x = Math.round(a.x - cx), y = Math.round(a.y - cy);
+    if (a.snow) { // bola de nieve
+      ctx.fillStyle = '#1b1b2f'; ctx.beginPath(); ctx.arc(x, y, a.r + 1.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(x, y, a.r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#c9e2f5'; ctx.fillRect(x - 2, y + 1, 4, 2);
+      continue;
+    }
     ctx.save(); ctx.translate(x, y); ctx.rotate(a.rot || 0);
     ctx.fillStyle = '#1b1b2f'; ctx.beginPath(); ctx.ellipse(0, 1, a.r + 2, a.r + 3, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#b5652b'; ctx.beginPath(); ctx.ellipse(0, 1, a.r, a.r + 1, 0, 0, Math.PI * 2); ctx.fill();
@@ -376,24 +553,25 @@ function drawBoss(cx, cy) {
   const fx = b.x + b.w / 2 - cx, fy = b.y + b.h - cy + 2;
   if (fx < -160 || fx > VW + 160) return;
   const blink = b.flash > 0 && Math.floor(b.flash * 14) % 2 === 0;
-  const dizzy = b.state === b.def.vulnerable || b.state === 'defeated' || b.state === 'hurt';
-  groundShadow(fx, fy - 2, b.w * 0.55);
-  let rot = dizzy ? Math.sin(b.animT * 7) * 0.07 : 0;
+  const dizzy = b.state === b.def.vulnerable || (b.state === 'defeated' && b.type !== 'wolf') || b.state === 'hurt';
+  groundShadow(fx, fy - 2 + (b.type === 'wolf' ? MAIN.groundRow * TS - (b.y + b.h) : 0), b.w * 0.55);
+  let rot = dizzy && b.type !== 'wolf' ? Math.sin(b.animT * 7) * 0.07 : 0;
   ctx.save();
   ctx.translate(Math.round(fx), Math.round(fy)); ctx.rotate(rot); ctx.translate(-Math.round(fx), -Math.round(fy));
   if (b.type === 'bruto') drawBrutoSprite(b, fx, fy, blink);
   else if (b.type === 'crab') drawCrabSprite(b, fx, fy, blink);
+  else if (b.type === 'wolf') drawWolfSprite(b, fx, fy, blink);
   else drawSquirrelSprite(b, fx, fy, blink);
   ctx.restore();
   if (dizzy) { // estrellitas girando sobre la cabeza
-    const hx = fx + (b.type === 'bruto' ? b.dir * 34 : b.type === 'squirrel' ? b.dir * 10 : 0), hy = fy - b.h - 16;
+    const hx = fx + (b.type === 'bruto' ? b.dir * 34 : b.type === 'squirrel' ? b.dir * 10 : b.type === 'wolf' ? b.dir * 28 : 0), hy = fy - b.h - 16;
     for (let i = 0; i < 3; i++) {
       const a = b.animT * 5 + i * Math.PI * 2 / 3;
       drawStar(hx + Math.cos(a) * 20, hy + Math.sin(a) * 6, 5, true);
     }
   }
   const warn = b.state === 'tell';
-  if (warn) text('!', fx + (b.type === 'bruto' ? b.dir * 10 : 0), fy - b.h - 30 + Math.sin(b.t * 30) * 2, 16, '#ff6b6b');
+  if (warn || b.state === 'crouch') text('!', fx + (b.type === 'bruto' || b.type === 'wolf' ? b.dir * 10 : 0), fy - b.h - 30 + Math.sin(b.t * 30) * 2, 16, '#ff6b6b');
   for (const w of waves) drawWave(w, cx, cy);
 }
 function drawBrutoSprite(b, fx, fy, blink) {
@@ -456,7 +634,7 @@ function drawWave(w, cx, cy) {
   const h = 18 + Math.sin(w.t * 20) * 2;
   ctx.fillStyle = '#1b1b2f';
   ctx.beginPath(); ctx.moveTo(x - 15, y + 1); ctx.quadraticCurveTo(x - w.dir * 4, y - h - 4, x + 15, y + 1); ctx.fill();
-  ctx.fillStyle = '#f2d16b';
+  ctx.fillStyle = w.snow ? '#eef7ff' : '#f2d16b';
   ctx.beginPath(); ctx.moveTo(x - 12, y); ctx.quadraticCurveTo(x - w.dir * 4, y - h, x + 12, y); ctx.fill();
   ctx.fillStyle = '#fff3b0'; ctx.fillRect(Math.round(x - w.dir * 4 - 2), Math.round(y - h + 4), 4, 3);
 }
@@ -466,6 +644,11 @@ function drawBossBar() {
   text(b.def.name, VW / 2, y + 3, 8, '#ffb3d1');
   ctx.fillStyle = '#1b1b2f'; ctx.fillRect(x - 2, y + 10, w + 4, 10);
   ctx.fillStyle = '#3a2030'; ctx.fillRect(x, y + 12, w, 6);
+  if (b.state === 'rise') { // segundo aliento: la barra se rellena (en azul hielo)
+    const n = b.def.second.length, seg2 = w / n;
+    for (let i = 0; i < Math.floor(b.refill * n + 0.001); i++) { ctx.fillStyle = '#8fe3ff'; ctx.fillRect(x + i * seg2 + 1, y + 12, seg2 - 2, 6); }
+    return;
+  }
   const seg = w / b.maxHp;
-  for (let i = 0; i < b.hp; i++) { ctx.fillStyle = '#ff4d6d'; ctx.fillRect(x + i * seg + 1, y + 12, seg - 2, 6); }
+  for (let i = 0; i < b.hp; i++) { ctx.fillStyle = b.second ? '#8fe3ff' : '#ff4d6d'; ctx.fillRect(x + i * seg + 1, y + 12, seg - 2, 6); }
 }

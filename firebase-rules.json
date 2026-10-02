@@ -16,10 +16,35 @@
         "$id": {
           ".write": "$id.length <= 40 && newData.exists()",
           ".validate": "newData.hasChildren(['last', 'lvl'])",
-          "first": { ".validate": "newData.isNumber() && newData.val() <= now + 60000" },
-          "last": { ".validate": "newData.isNumber() && newData.val() <= now + 60000" },
-          "lvl": { ".validate": "newData.isString() && newData.val().length <= 8" },
-          "$other": { ".validate": false }
+          "first": {
+            ".validate": "newData.isNumber() && newData.val() <= now + 60000"
+          },
+          "last": {
+            ".validate": "newData.isNumber() && newData.val() <= now + 60000"
+          },
+          "lvl": {
+            ".validate": "newData.isString() && newData.val().length <= 8"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      },
+      "choices": {
+        "give": {
+          "$run": {
+            ".write": "$run.length <= 40 && !data.exists() && !root.child('simba/choices/keep/' + $run).exists()",
+            ".validate": "newData.val() === true"
+          }
+        },
+        "keep": {
+          "$run": {
+            ".write": "$run.length <= 40 && !data.exists() && !root.child('simba/choices/give/' + $run).exists()",
+            ".validate": "newData.val() === true"
+          }
+        },
+        "$other": {
+          ".validate": false
         }
       }
     }

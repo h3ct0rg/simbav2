@@ -19,6 +19,10 @@
 //    K  mensajero (meta de los niveles 1-3; gatito en primavera, tortuga en verano)
 //    M  mamá (meta del nivel 4)      B  jefe del mundo     [ ]  bordes de la arena del jefe
 //    1-9  entrada secreta a la sala con ese número (pulsar ↓)
+//  Invierno:
+//    I  hielo (sólido y RESBALADIZO)  k  hielo fino: cruje y se rompe si Simba se queda encima
+//    y  carámbano: tiembla y cae cuando Simba pasa debajo (vuelve a crecer)
+//    n  muñeco de nieve (lanza bolas de nieve)   p  pingüino (se lanza de panza al ver a Simba)
 //    0  (dentro de una sala) salida de vuelta al nivel
 //
 //  Para crear un nivel nuevo basta con copiar uno, editar el dibujo y ajustar `diff`
@@ -504,7 +508,165 @@ const WORLDS = [
       },
     ],
   },
-  { id: 4, season: 'winter', name: { es: 'Invierno', en: 'Winter' }, levels: [] },
+  {
+    id: 4, season: 'winter', messenger: 'elf', boss: 'wolf',
+    name: { es: 'Invierno', en: 'Winter' },
+    levels: [
+      {
+        id: '4-1', diff: 1.58,
+        name: { es: "Pueblo navideño", en: "Christmas Village" },
+        say: { es: ["¡Hola, Simba! Soy Cascabel, el duende de la Navidad. Tu mamá pasó por el pueblo.", "Cuidado: el hielo resbala, y los carámbanos tiemblan justo antes de caer."], en: ["Hi, Simba! I'm Jingle, the Christmas elf. Your mom passed through the village.", "Careful: ice is slippery, and icicles shake right before they fall."] },
+        map: [
+          "",
+          "",
+          "",
+          "",
+          "                                        v    ####                                                   v                 ####                                           v",
+          "                                              yy                                                                       yy                                                                                      ###",
+          "                         oooo                           ooooo                              ooooo                n                  oooo       oooooo                       oooooo                              ###",
+          "                                            ooo                                                               #####  oooo                                                                                      ###",
+          "  P  ooo      n                C      p             n             1     n  ooo  p     p           C      p    #####          p                      n         p n                       n ooo   p         K    ###",
+          "##################IIIIIII    #############IIIIIIIII##### kk  #######################IIIIIII kk  ###################################    #####IIIIIIIIIIIII################## kk   #################################",
+          "#########################    ###########################     ##############################     ###################################    ####################################      #################################",
+          "#########################    ###########################     ##############################     ###################################    ####################################      #################################",
+        ],
+        rooms: {
+          '1': { style: 'cave', map: [
+              "########################################",
+              "#       y       y   y         y        #",
+              "#                                      #",
+              "#                                      #",
+              "#                v                     #",
+              "#                       v              #",
+              "#             ooo     ooo          +   #",
+              "#                                ##### #",
+              "# 0 ooo                      ooo ##### #",
+              "############# kk  kk  kk   #############",
+              "#############              #############",
+              "#############              #############",
+            ] },
+        },
+      },
+      {
+        id: '4-2', diff: 1.65,
+        name: { es: "El lago helado", en: "The Frozen Lake" },
+        say: { es: ["El hielo fino cruje y se rompe si te quedas encima. ¡No te detengas!", "Y ojo con los pingüinos: se lanzan de panza a toda velocidad."], en: ["Thin ice cracks and breaks if you stand on it. Keep moving!", "And watch out for penguins: they belly-slide at full speed."] },
+        map: [
+          "",
+          "",
+          "",
+          "                                                                                            v                                   v",
+          "                                        v      ####                                 ####                                     ooo                                          ####            v                          ####",
+          "                                                yy                                   yy                                      ===                                           yy                                         yy                                           ###",
+          "                       ooooo                                 ooo   ooo                               ooooo                                   ooooo   ooo                                       ooooo                                   ooo                         ###",
+          "                                  oooooooo                                        ooo                                                                           ooooo                                     ooooo                                                    ###",
+          "  P  ooo    p     n            C    p       p       n                     1     p       n      p            C      n      p       n    p                      p       n       p       n                 p         n       p       n           p ooo n       K      ###",
+          "#######################kk   IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIkk ###kk IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIkk   ############IIIIIIIIIIIIIIIIIIIIIIIkk   ###kk IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIkk   IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIkk ############################",
+          "#######################     #################################   ###   ###############################     ###################################     ###   #######################################     ###################################   ############################",
+          "#######################     #################################   ###   ###############################     ###################################     ###   #######################################     ###################################   ############################",
+        ],
+        rooms: {
+          '1': { style: 'cave', map: [
+              "############################################",
+              "#      y     y       y       y      y      #",
+              "#                                          #",
+              "#                     v                    #",
+              "#             v                            #",
+              "#                             v            #",
+              "#          ooo     ooo     ooo          +  #",
+              "#                                     #### #",
+              "# 0 ooo                               #### #",
+              "########## kk  kk  kk  kk  kk     ##########",
+              "##########                        ##########",
+              "##########                        ##########",
+            ] },
+        },
+      },
+      {
+        id: '4-3', diff: 1.72,
+        name: { es: "Cumbres nevadas", en: "Snowy Peaks" },
+        say: { es: ["Tu mamá está muy cerca, al otro lado de la guarida del lobo.", "Dicen que el lobo no es malo... solo tiene mucha hambre."], en: ["Your mom is very close, beyond the wolf's den.", "They say the wolf isn't bad... he's just very hungry."] },
+        map: [
+          "",
+          "",
+          "                            ####",
+          "                             yy                                                                         v                         v",
+          "                v                                   v                        ####                    n                                    v                                  ####",
+          "                      ooo p      n     p                                      yy                    ===                                                                       yy                                                    ###",
+          "                     IIIIIIIIIIIIIIIIIIIIII oooooooooooooooooo                           oooo                             oooooooooooooooooooooo                                                 oooo                               ###",
+          "                ===  ######################                                 ooo                                                                                 oooooo                                                              ###",
+          "  P ooo   n       p  ######################                       C  1    p     n     p         ooo         p    2  n                               C      p      n       p       n       p                n ooo  p     n     K     ###",
+          "###########################################kkk  kk   kk  kk  kk ########IIIIIIIIIIIIIIIII    ############################ kk   kk   kk   kk  kk   ############IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII    ##################################",
+          "###########################################                     #########################    ############################                         ###############################################    ##################################",
+          "###########################################                     #########################    ############################                         ###############################################    ##################################",
+        ],
+        rooms: {
+          '1': { style: 'cave', map: [
+              "########################################",
+              "#       y     y     y     y      y     #",
+              "#                                      #",
+              "#                    v                 #",
+              "#             v                        #",
+              "#                         v            #",
+              "#          ooo     ooo             +   #",
+              "#                                ##### #",
+              "# 0 ooo                        oo##### #",
+              "########## kk  kk  kk  kk     ##########",
+              "##########                    ##########",
+              "##########                    ##########",
+            ] },
+          '2': { style: 'tree', map: [
+              "####################",
+              "#         y        #",
+              "#                  #",
+              "#            +     #",
+              "#           ###    #",
+              "#     ooo   ###    #",
+              "#     ###   ###    #",
+              "#     ###   ###    #",
+              "# 0   ###   ### ooo#",
+              "####################",
+              "####################",
+              "####################",
+            ] },
+        },
+      },
+      {
+        id: '4-4', diff: 1.79,
+        name: { es: "La guarida del lobo", en: "The Wolf's Den" },
+        map: [
+          "                                                                          ########################",
+          "                                                                          ########################",
+          "",
+          "",
+          "                                                          v   ####",
+          "                                                               yy                                                                                                    ###",
+          "                           ooooo                                                                                                                                     ###",
+          "                                                                                                                                                                     ###",
+          "  P  ooo  n       p                   p ooo  n      1                 C     [             B    ]                                          M                          ###",
+          "##############IIIIIIIIIIIII kk   ################################################IIIIIIIIII#############################################################################",
+          "###########################      #######################################################################################################################################",
+          "###########################      #######################################################################################################################################",
+        ],
+        rooms: {
+          '1': { style: 'cave', map: [
+              "####################",
+              "#       y          #",
+              "#                  #",
+              "#          +       #",
+              "#         ==       #",
+              "#     oo           #",
+              "#     ==           #",
+              "#                  #",
+              "# 0           oooo #",
+              "####################",
+              "####################",
+              "####################",
+            ] },
+        },
+      },
+    ],
+  },
 ];
 const LEVELS_PER_WORLD = 4;
 
@@ -519,7 +681,7 @@ function parseArea(rows, isRoom) {
   const cols = Math.max(...rows.map(r => r.length));
   const grid = Array.from({ length: LV_ROWS }, () => new Array(cols).fill(0));
   const a = {
-    isRoom, cols, rows: LV_ROWS, grid, spawn: null, fish: [], lifes: [], walkers: [], bats: [], urchins: [], mushrooms: [], movers: [], leaves: [], geysers: [], squirrels: [], checkpoints: [],
+    isRoom, cols, rows: LV_ROWS, grid, spawn: null, fish: [], lifes: [], walkers: [], bats: [], urchins: [], ice: new Set(), thin: [], icicles: [], snowmen: [], mushrooms: [], movers: [], leaves: [], geysers: [], squirrels: [], checkpoints: [],
     doors: [], checkpoint: null, messenger: null, mother: null, boss: null, arena: null, exit: null,
   };
   let arenaL = null;
@@ -528,6 +690,11 @@ function parseArea(rows, isRoom) {
     for (let c = 0; c < line.length; c++) {
       const ch = line[c];
       if (ch === '#') grid[r][c] = T_SOLID;
+      else if (ch === 'I') { grid[r][c] = T_SOLID; a.ice.add(r * cols + c); }
+      else if (ch === 'k') a.thin.push({ c, r });
+      else if (ch === 'y') a.icicles.push({ c, r });
+      else if (ch === 'n') a.snowmen.push({ c, r });
+      else if (ch === 'p') a.walkers.push({ type: 'penguin', c, r });
       else if (ch === '=') grid[r][c] = T_ONEWAY;
       else if (ch === 'P') a.spawn = { c, r };
       else if (ch === 'o') a.fish.push({ c, r });

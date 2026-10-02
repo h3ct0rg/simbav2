@@ -24,6 +24,8 @@ const nodeLevel = i => {
   return w && w.levels[i % LEVELS_PER_WORLD];
 };
 const nodeUnlocked = i => !!nodeLevel(i) && i < SAVE.unlocked;
+const FINAL_NODE = () => WORLDS.length * LEVELS_PER_WORLD - 1;
+const nodeClosed = i => i === FINAL_NODE() && !!SAVE.gameDone; // juego terminado: el jefe final no se repite
 const map = { sel: 0, simX: 0, simY: 0, t: 0, flakes: [], walk: null, pop: null, face: 1 };
 
 // `from`: nivel desde el que llega Simba (al superar un nivel camina por el sendero hasta el siguiente)
@@ -62,6 +64,7 @@ function mapPlay() {
   if (map.walk) { finishMapWalk(); return; } // ENTER durante el paseo: lo salta
   const lv = nodeLevel(map.sel);
   if (!lv || !nodeUnlocked(map.sel)) return;
+  if (nodeClosed(map.sel)) { SFX.backSnd(); return; }
   SFX.select(); startLevel(lv.id);
 }
 function mapKey(code) {
@@ -134,8 +137,9 @@ const REGION_ART = {
   spring: { img: () => A.bg, focus: 0.5 },
   summer: { img: () => A.bgSummer, focus: 0.68 },  // la cascada
   autumn: { img: () => A.bgAutumn, focus: 0.52 },  // el sol sobre el lago
+  winter: { img: () => A.bgWinter, focus: 0.5 },   // montañas nevadas al atardecer
 };
-function drawWinterRegion(x0) { // el invierno aún no tiene fondo propio: montañas nevadas por código
+function drawWinterRegion(x0) { // respaldo si no carga el fondo de invierno: montañas nevadas por código
   const g = ctx.createLinearGradient(0, MAP_TOP, 0, MAP_BOT);
   g.addColorStop(0, '#9cc6e8'); g.addColorStop(0.6, '#dcebf8'); g.addColorStop(1, '#f4f9ff');
   ctx.fillStyle = g; ctx.fillRect(x0, MAP_TOP, 160, MAP_BOT - MAP_TOP);
@@ -218,7 +222,8 @@ function drawNode(i, p) {
   if (!unlocked) { // candado
     ctx.fillStyle = '#2f3142'; ctx.fillRect(p.x - 5, y - 1, 10, 7);
     ctx.strokeStyle = '#2f3142'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, y - 1, 3.5, Math.PI, 0); ctx.stroke();
-  } else if (isBoss) drawHeart(p.x, y - 6, 1.35, done ? '#ff6b9a' : '#ff9ec0'); // mamá espera aquí
+  } else if (nodeClosed(i)) drawHouseIcon(p.x, y); // Simba ya está en casa
+  else if (isBoss) drawHeart(p.x, y - 6, 1.35, done ? '#ff6b9a' : '#ff9ec0'); // mamá espera aquí
   else {
     ctx.font = 'bold 9px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillStyle = '#1b1b2f'; ctx.fillText(String(i % LEVELS_PER_WORLD + 1), p.x + 1, y + 1);
@@ -228,6 +233,27 @@ function drawNode(i, p) {
     for (let k = 0; k < 3; k++) drawStar(p.x - 9 + k * 9, p.y + r + 10, 3.5, k < st.stars);
   }
   hitRects.push({ x: p.x - 16, y: p.y - 16, w: 32, h: 32, idx: i, zone: 'node' });
+}
+
+function drawHouseIcon(x, y) {
+  ctx.fillStyle = '#1b1b2f'; ctx.beginPath(); ctx.moveTo(x - 9, y); ctx.lineTo(x, y - 9); ctx.lineTo(x + 9, y); ctx.fill();
+  ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.moveTo(x - 7, y - 1); ctx.lineTo(x, y - 7); ctx.lineTo(x + 7, y - 1); ctx.fill();
+  ctx.fillStyle = '#1b1b2f'; ctx.fillRect(x - 7, y - 1, 14, 9);
+  ctx.fillStyle = '#e8c48a'; ctx.fillRect(x - 6, y, 12, 7);
+  ctx.fillStyle = '#ffd25a'; ctx.fillRect(x - 4, y + 1, 3, 3); // ventana encendida
+  ctx.fillStyle = '#7a4d2a'; ctx.fillRect(x + 1, y + 2, 3, 5);
+}
+// Insignia "Corazón generoso": solo en el mapa de la partida que compartió con el lobo
+function drawGenerousBadge(x, y) {
+  const pulse = 1 + Math.sin(map.t * 3) * 0.06;
+  const g = ctx.createRadialGradient(x, y, 2, x, y, 18);
+  g.addColorStop(0, 'rgba(255,170,200,0.55)'); g.addColorStop(1, 'rgba(255,170,200,0)');
+  ctx.fillStyle = g; ctx.fillRect(x - 18, y - 18, 36, 36);
+  ctx.fillStyle = '#1b1b2f'; ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#ffd23f'; ctx.beginPath(); ctx.arc(x, y, 10.5, 0, Math.PI * 2); ctx.fill(); // aro dorado
+  ctx.fillStyle = '#5a2340'; ctx.beginPath(); ctx.arc(x, y, 8.5, 0, Math.PI * 2); ctx.fill();
+  drawHeart(x, y - 5 * pulse, 1.25 * pulse, '#ff6b9a');
+  if (Math.sin(map.t * 2.2) > 0.85) { ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(x + 5), Math.round(y - 8), 2, 2); } // destello
 }
 
 function drawMap() {
@@ -274,19 +300,25 @@ function drawMap() {
   // banderines con el nombre de cada estación
   const curW = Math.floor(map.sel / 4);
   WORLDS.forEach((w, wi) => drawBanner(wi * 160 + 80, MAP_TOP + 10, (w.name[SETTINGS.lang] || w.name.es).toUpperCase(), SEASON[w.season].dark, wi === curW));
+  WORLDS.forEach((w, wi) => { if ((SAVE.goldHearts || {})[w.id]) drawHeart(wi * 160 + 146, MAP_TOP + 30, 1.1, '#ffd23f'); }); // corazón dorado encontrado
 
   // panel superior con el nivel elegido
   const lv = nodeLevel(map.sel), wd = WORLDS[curW];
   panel(14, 8, VW - 28, 88);
   drawLifeIcon(40, 32, 26); text('x' + SAVE.lives, 58, 33, 11, '#ffffff', 'left');
+  drawHeart(40, 50, 1.5, '#ffd23f'); text(goldHeartCount() + '/' + WORLDS.length, 58, 59, 9, '#ffd23f', 'left'); // corazones dorados
   drawStar(VW - 92, 31, 9, true); text(totalStars() + '/' + ALL_LEVELS.length * 3, VW - 78, 33, 9, '#ffd23f', 'left');
+  if (SAVE.choice === 'give') drawGenerousBadge(VW - 50, 62);
   if (lv) {
     text(t('world') + ' ' + lv.id + '  ·  ' + (wd.name[SETTINGS.lang] || wd.name.es).toUpperCase(), VW / 2, 27, 10, '#ffb3d1');
     text(lv.name[SETTINGS.lang] || lv.name.es, VW / 2, 48, 12, '#ffffff');
     const st = levelStats(lv.id);
-    text(st.done ? `${t('best_fish')}: ${st.fish}/${levelFishTotal(lv)}` : (map.sel % 4 === 3 ? t('boss_level') : t('new_level')), VW / 2, 67, 8, '#fff3b0');
-    button(VW / 2 - 60, 76, 120, 16, t('play'), true, map.sel);
-    hitRects[hitRects.length - 1].zone = 'play';
+    if (nodeClosed(map.sel)) text(t('final_done'), VW / 2, 72, 9, '#7cf2c4'); // sin botón JUGAR
+    else {
+      text(st.done ? `${t('best_fish')}: ${st.fish}/${levelFishTotal(lv)}` : (map.sel % 4 === 3 ? t('boss_level') : t('new_level')), VW / 2, 67, 8, '#fff3b0');
+      button(VW / 2 - 60, 76, 120, 16, t('play'), true, map.sel);
+      hitRects[hitRects.length - 1].zone = 'play';
+    }
   }
   ctx.fillStyle = 'rgba(15,15,35,0.75)'; ctx.fillRect(0, MAP_BOT, VW, VH - MAP_BOT);
   text(IS_TOUCH ? t('map_hint_touch') : t('map_hint_keys'), VW / 2, 350, 7, '#ffffff');
