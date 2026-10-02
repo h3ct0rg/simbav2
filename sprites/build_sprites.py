@@ -130,6 +130,25 @@ for name, ch in SRC.get("characters", {}).items():
     manifest[name] = entry
     print(f"{name}: {entry['size']} ", {k: len(v) for k, v in frames.items()})
 
+# ---- Animaciones hechas con animate_image (frames sueltos ya descargados en raw/) ----
+# Todos los frames del conjunto comparten recorte (bbox común) y apoyan los pies abajo.
+for name, sd in SRC.get("frame_sets", {}).items():
+    frames = {a: [Image.open(os.path.join(HERE, f)).convert("RGBA") for f in d["files"]] for a, d in sd["anims"].items()}
+    boxes = [im.getbbox() for imgs in frames.values() for im in imgs if im.getbbox()]
+    l = min(b[0] for b in boxes); t = min(b[1] for b in boxes)
+    r = max(b[2] for b in boxes); b_ = max(b[3] for b in boxes)
+    entry = {"anims": {}}
+    for anim, imgs in frames.items():
+        paths = []
+        for i, im in enumerate(imgs):
+            out = os.path.join(HERE, name, anim, f"{i}.png")
+            os.makedirs(os.path.dirname(out), exist_ok=True)
+            im.crop((l, t, r, b_)).save(out)
+            paths.append(rel(out))
+        entry["anims"][anim] = {"fps": sd["anims"][anim].get("fps", 10), "frames": paths}
+    manifest[name] = entry
+    print(f"{name}: {[r - l, b_ - t]}", {k: len(v) for k, v in frames.items()})
+
 # ---- Imágenes sueltas (enemigos estáticos, fondo) ----
 for name, im_def in SRC.get("images", {}).items():
     dest = os.path.join(HERE, "raw", name + ".png")
@@ -157,21 +176,19 @@ for name, im_def in SRC.get("images", {}).items():
     manifest[name] = rel(out)
     print(f"{name}: {im.size}")
 
-# ---- Tiles (recortes de la hoja del tileset) ----
-tiles = SRC.get("tiles")
-if tiles:
-    # Tileset Wang de esquinas (raw/tileset.png + raw/tileset_meta.json descargados con auth).
-    # wang_N: bits SE=1, SW=2, NE=4, NW=8 marcan esquinas "upper" (vacías); "lower" = tierra.
-    sheet = Image.open(os.path.join(HERE, "raw", "tileset.png")).convert("RGBA")
-    meta = json.load(open(os.path.join(HERE, "raw", "tileset_meta.json"), encoding="utf-8"))
-    manifest["tiles"] = {}
+# ---- Tilesets Wang de esquinas (uno por estación) ----
+# wang_N: bits SE=1, SW=2, NE=4, NW=8 marcan esquinas "upper" (vacías); "lower" = tierra.
+for key, ts in SRC.get("tilesets", {}).items():
+    sheet = Image.open(os.path.join(HERE, ts["image"])).convert("RGBA")
+    meta = json.load(open(os.path.join(HERE, ts["meta"]), encoding="utf-8"))
+    manifest[key] = {}
     for t in meta["tileset_data"]["tiles"]:
         bb = t["bounding_box"]
-        out = os.path.join(HERE, "tiles", t["name"] + ".png")
+        out = os.path.join(HERE, key, t["name"] + ".png")
         os.makedirs(os.path.dirname(out), exist_ok=True)
         sheet.crop((bb["x"], bb["y"], bb["x"] + bb["width"], bb["y"] + bb["height"])).save(out)
-        manifest["tiles"][t["name"]] = rel(out)
-    print("tiles:", len(manifest["tiles"]))
+        manifest[key][t["name"]] = rel(out)
+    print(key + ":", len(manifest[key]), "tiles")
 
 with open(os.path.join(HERE, "manifest.js"), "w", encoding="utf-8") as f:
     f.write("// Generado por build_sprites.py — no editar a mano\n")

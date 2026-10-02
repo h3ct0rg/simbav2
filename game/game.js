@@ -61,12 +61,29 @@ const A = {
   rat: imgOrNull(S.rat),
   motherThin: Array.isArray(S.mother_thin) ? S.mother_thin.map(img) : [], // de la más flaca a la menos
   bg: imgOrNull(S.bg),
+  bgSummer: imgOrNull(S.bg_summer),
+  crab: imgOrNull(S.crab), bee: imgOrNull(S.bee), urchin: imgOrNull(S.urchin), turtle: imgOrNull(S.turtle),
+  mushroom: imgOrNull(S.mushroom), log: imgOrNull(S.log),
+  bossCrab: loadSet(S.boss_crab), // idle (pinzas arriba) · slam (golpe, 8 frames) · stuck (pinzas clavadas)
   caveBg: imgOrNull(S.cave_bg),
   caveDoor: imgOrNull(S.cave_door),
   treeDoor: imgOrNull(S.tree_door),
   lifeIcon: imgOrNull(S.life_icon),
   tiles: S.tiles ? Object.fromEntries(Object.entries(S.tiles).map(([k, v]) => [k, img(v)])) : null,
+  tilesSummer: S.tiles_summer ? Object.fromEntries(Object.entries(S.tiles_summer).map(([k, v]) => [k, img(v)])) : null,
 };
+
+// ---------------- Estaciones ----------------
+// Fondo, terreno, agua y ambiente de cada mundo. `horizon` = fila de la imagen de fondo
+// donde la hierba toca la tierra (se alinea con el césped jugable).
+const SEASON_CFG = {
+  spring: { bg: () => A.bg, tiles: () => A.tiles, horizon: 214, water: false, ambient: 'petals',
+    sky: ['#5fd3f5', '#a8ecf7'] },
+  summer: { bg: () => A.bgSummer, tiles: () => A.tilesSummer || A.tiles, horizon: 212, water: true, ambient: 'sparkles',
+    sky: ['#6fe2f7', '#b8f2f7'], waterfall: { x0: 258, x1: 286, y0: 86, y1: 170 } },
+};
+const curSeason = () => (LV && !['menu', 'settings'].includes(state) ? LV.world.season : 'spring');
+const seasonCfg = s => SEASON_CFG[s] || SEASON_CFG.spring;
 function anim(set, name) { return set && set.anims[name] && set.anims[name].frames.length ? set.anims[name] : null; }
 const frameAt = (an, t, fps) => an.frames[Math.floor(t * (fps || an.fps)) % an.frames.length];
 
@@ -134,7 +151,25 @@ const BASS = [ // negras
   48, 55, 48, 55,  43, 50, 43, 50,  45, 52, 41, 48,  43, 50, 48, 0,
   48, 55, 48, 55,  43, 50, 43, 55,  41, 48, 41, 48,  43, 50, 48, 0,
 ];
-const BEAT = 60 / 132 / 2; // duración de una corchea
+// Verano: melodía tipo calipso, más rápida y con timbre más suave
+const MELODY_SUMMER = [
+  79, 0, 76, 79, 81, 79, 76, 0,    74, 76, 79, 0, 76, 74, 72, 0,
+  79, 0, 76, 79, 84, 81, 79, 0,    81, 79, 76, 74, 72, 0, 0, 0,
+  76, 79, 81, 0, 84, 0, 81, 79,    76, 79, 81, 84, 86, 0, 84, 0,
+  81, 0, 79, 76, 79, 81, 79, 76,   74, 76, 72, 0, 72, 0, 0, 0,
+];
+const BASS_SUMMER = [
+  48, 55, 52, 55,  53, 57, 60, 57,  55, 59, 62, 59,  48, 55, 48, 0,
+  48, 55, 52, 55,  53, 57, 60, 57,  55, 59, 55, 50,  48, 52, 48, 0,
+];
+const MUSIC_CFG = {
+  spring: { melody: MELODY, bass: BASS, bpm: 132, lead: 'square', transpose: 0 },
+  summer: { melody: MELODY_SUMMER, bass: BASS_SUMMER, bpm: 146, lead: 'triangle', transpose: 2 },
+};
+const musicCfg = () => {
+  const season = state === 'map' ? WORLDS[Math.floor(map.sel / LEVELS_PER_WORLD)].season : curSeason();
+  return MUSIC_CFG[season] || MUSIC_CFG.spring;
+};
 let musicStep = 0, musicNext = 0, noiseBuf = null;
 function note(freq, t0, dur, type, vol) {
   const o = AC.createOscillator(), g = AC.createGain();
@@ -161,11 +196,12 @@ function startMusic() {
   setInterval(() => {
     if (!AC || AC.state !== 'running') return;
     while (musicNext < AC.currentTime + 0.25) { // programa notas con antelación (sin cortes)
-      const i = musicStep % MELODY.length;
-      if (MELODY[i]) note(midi(MELODY[i]), musicNext, BEAT * 0.9, 'square', 0.05);
+      const m = musicCfg(), BEAT = 60 / m.bpm / 2; // duración de una corchea
+      const i = musicStep % m.melody.length;
+      if (m.melody[i]) note(midi(m.melody[i] + m.transpose), musicNext, BEAT * 0.9, m.lead, m.lead === 'square' ? 0.05 : 0.09);
       if (i % 2 === 0) {
-        const b = BASS[(i / 2) % BASS.length];
-        if (b) note(midi(b), musicNext, BEAT * 1.8, 'triangle', 0.14);
+        const b = m.bass[(i / 2) % m.bass.length];
+        if (b) note(midi(b + m.transpose), musicNext, BEAT * 1.8, 'triangle', 0.14);
       }
       if (i % 2 === 1) hat(musicNext, 0.035);
       musicNext += BEAT; musicStep++;
@@ -194,6 +230,9 @@ const SFX = {
   select: () => { beep(784, 784, 0.07, 'square', 0.05); beep(1175, 1175, 0.1, 'square', 0.05, 0.06); },
   tick: () => beep(523, 523, 0.04, 'triangle', 0.05),
   backSnd: () => beep(523, 330, 0.1, 'square', 0.04),
+  boing: () => { beep(180, 720, 0.22, 'triangle', 0.09); beep(360, 1100, 0.18, 'sine', 0.05, 0.03); },
+  splash: () => { beep(900, 120, 0.35, 'sawtooth', 0.04); beep(500, 80, 0.4, 'triangle', 0.05, 0.05); },
+  prick: () => beep(1400, 500, 0.12, 'square', 0.06),
 };
 
 // ---------------- Input ----------------
@@ -395,7 +434,8 @@ function makePlayer(x, y) {
   return { x, y, w: 30, h: 26, vx: 0, vy: 0, onGround: false, facing: 1, coyote: 0, jumpBuffer: 0,
     invuln: 0, sx: 1, sy: 1, animT: 0, dustT: 0, prevBottom: 0 };
 }
-const WALK_SPEED = { dog: 62, rat: 105 };
+const WALK_SPEED = { dog: 62, rat: 105, crab: 80 };
+const WALKER_SIZE = { dog: [38, 28], rat: [28, 18], crab: [30, 22] };
 
 // Construye el estado jugable de un área a partir de su mapa
 function buildArea(rows, isRoom, roomId, style) {
@@ -404,13 +444,25 @@ function buildArea(rows, isRoom, roomId, style) {
   const d = LV.diff || 1;
   a.enemies = [
     ...a.walkers.map(w => {
-      const big = w.type === 'dog', ww = big ? 38 : 28, hh = big ? 28 : 18;
+      const [ww, hh] = WALKER_SIZE[w.type];
       return { type: w.type, x: w.c * TS + (TS - ww) / 2, y: (w.r + 1) * TS - hh, w: ww, h: hh, vx: -WALK_SPEED[w.type] * d,
         speed: WALK_SPEED[w.type] * d, vy: 0, alive: true, deadT: 0, animT: Math.random() * 3, onGround: false };
     }),
-    ...a.bats.map(b => ({ type: 'bat', cx: b.c * TS, baseY: b.r * TS, range: 4 * TS, x: b.c * TS, y: b.r * TS, w: 28, h: 20,
-      vx: 0, alive: true, deadT: 0, animT: Math.random() * 6, speed: 1.1 * d })),
+    ...a.bats.map(b => ({ type: b.type, cx: b.c * TS, baseY: b.r * TS, range: (b.type === 'bee' ? 3 : 4) * TS, x: b.c * TS, y: b.r * TS,
+      w: b.type === 'bee' ? 26 : 28, h: b.type === 'bee' ? 22 : 20,
+      vx: 0, alive: true, deadT: 0, animT: Math.random() * 6, speed: (b.type === 'bee' ? 0.9 : 1.1) * d })),
   ];
+  // erizos: pinchan siempre (no se pueden pisar)
+  a.urchinObjs = a.urchins.map(u => ({ x: u.c * TS + 3, y: (u.r + 1) * TS - 24, w: 26, h: 24, t: Math.random() * 6 }));
+  // hongos saltarines
+  a.mushroomObjs = a.mushrooms.map(m => ({ x: m.c * TS + 1, y: (m.r + 1) * TS - 22, w: 30, h: 22, squash: 0 }));
+  // troncos que se mueven: 'x' recorre el hueco libre a sus lados (hasta 3 casillas), 'y' sube hasta 3 filas
+  a.moverObjs = a.movers.map(m => {
+    const free = dir => { let n = 0; while (n < 3) { const c = dir < 0 ? m.c - 1 - n : m.c + 3 + n; if (c < 0 || c >= a.cols || a.grid[m.r][c]) break; n++; } return n; };
+    const amp = m.axis === 'x' ? Math.min(free(-1), free(1)) * TS : 3 * TS;
+    return { axis: m.axis, x0: m.c * TS, y0: m.r * TS, x: m.c * TS, y: m.r * TS, w: 3 * TS, h: 14, amp,
+      t: Math.random() * 6, period: m.axis === 'x' ? 2.6 + amp / TS * 0.6 : 3.4, dx: 0, dy: 0 };
+  });
   a.fishes = a.fish.map(f => ({ x: f.c * TS + 8, y: f.r * TS + 8, w: 16, h: 14, taken: false, t: Math.random() * 6 }));
   // vidas extra: cada una tiene una clave única y, una vez recogida, no vuelve a aparecer
   a.oneups = a.lifes.map(l => ({ key: `${LV.id}:${roomId || 'main'}:${l.c},${l.r}`, x: l.c * TS + 4, y: l.r * TS + 4, w: 24, h: 24, t: Math.random() * 6 }))
@@ -484,7 +536,7 @@ function loseLife() {
 function respawn() {
   setArea(MAIN);
   player.x = checkpoint.spawnX; player.y = checkpoint.spawnY;
-  player.vx = 0; player.vy = 0; player.invuln = 1.5; player.facing = 1;
+  player.vx = 0; player.vy = 0; player.invuln = 1.5; player.facing = 1; player.splashed = false; player.onMover = null;
   hearts = 3;
   resetBossFight();
   snapCamera();
@@ -527,6 +579,53 @@ function updateDoor(dt) {
 }
 
 // ---------------- Update ----------------
+// Troncos: se mueven y arrastran a Simba si está encima
+function updateMovers(dt) {
+  for (const m of AR.moverObjs) {
+    const px = m.x, py = m.y;
+    m.t += dt;
+    const ph = m.t * Math.PI * 2 / m.period;
+    if (m.axis === 'x') m.x = m.x0 + Math.sin(ph) * m.amp;
+    else m.y = m.y0 - (1 - Math.cos(ph)) / 2 * m.amp;
+    m.dx = m.x - px; m.dy = m.y - py;
+    if (player.onMover === m && state === 'play') { moveX(player, m.dx); player.y += m.dy; }
+  }
+}
+function landOnMovers(p) {
+  p.onMover = null;
+  if (p.vy < 0) return;
+  for (const m of AR.moverObjs) {
+    if (p.x + p.w > m.x + 4 && p.x < m.x + m.w - 4 && p.prevBottom <= m.y + 6 && p.y + p.h >= m.y) {
+      p.y = m.y - p.h; p.vy = 0; p.onGround = true; p.onMover = m;
+    }
+  }
+}
+// Hongos: rebote enorme (más aún manteniendo el salto)
+function bounceMushrooms(p) {
+  for (const mu of AR.mushroomObjs) {
+    mu.squash = Math.max(0, mu.squash - 0.06);
+    // funciona como trampolín: basta con tocar el sombrero sin estar subiendo (también caminando)
+    if (p.vy >= 0 && overlap(p, { x: mu.x + 3, y: mu.y, w: mu.w - 6, h: 12 })) {
+      p.y = mu.y - p.h; p.vy = inJump() ? -1040 : -920; p.onGround = false; p.coyote = 0; p.jumpBuffer = 0;
+      p.spring = 0.7; // el impulso del hongo no se corta al soltar el botón
+      p.sx = 0.75; p.sy = 1.3; mu.squash = 1;
+      SFX.boing(); puff(mu.x + mu.w / 2, mu.y, 10, '#ff8fb8', 60, 50, 0.4);
+    }
+  }
+}
+// Erizos: pinchan aunque se les salte encima (rebote hacia arriba para escapar)
+function touchUrchins(p) {
+  for (const u of AR.urchinObjs) {
+    u.t += 1 / 120;
+    if (p.invuln <= 0 && overlap(p, { x: u.x + 4, y: u.y + 6, w: u.w - 8, h: u.h - 6 })) {
+      SFX.prick();
+      const fromAbove = p.vy > 0 && p.prevBottom <= u.y + 12;
+      hurtPlayer(u.x + u.w / 2);
+      if (fromAbove) p.vy = -520;
+    }
+  }
+}
+
 function updatePlayer(dt) {
   const p = player;
   p.prevBottom = p.y + p.h;
@@ -554,7 +653,8 @@ function updatePlayer(dt) {
   }
   // Salto variable: soltar el botón corta la subida; flotación suave en el ápice
   let g = GRAV;
-  if (p.vy < 0 && !inJump()) g *= 2.6;
+  p.spring = Math.max(0, (p.spring || 0) - dt);
+  if (p.vy < 0 && !inJump() && p.spring <= 0) g *= 2.6;
   else if (Math.abs(p.vy) < 70 && inJump()) g *= 0.55;
   else if (p.vy > 0) g *= 1.15;
   p.vy = Math.min(p.vy + g * dt, MAXFALL);
@@ -562,6 +662,15 @@ function updatePlayer(dt) {
   const wasGround = p.onGround;
   moveX(p, p.vx * dt);
   moveY(p, p.vy * dt);
+  landOnMovers(p);
+  bounceMushrooms(p);
+  touchUrchins(p);
+  if (state !== 'play') return;
+  // salpicadura al caer al agua (verano)
+  if (seasonCfg(curSeason()).water && !AR.isRoom && !p.splashed && p.y + p.h > G * TS + 18) {
+    p.splashed = true; SFX.splash();
+    puff(p.x + p.w / 2, G * TS + 18, 22, '#bff3ff', 80, 140, 0.6, 4);
+  }
   if (!wasGround && p.onGround) {
     p.sx = 1.25; p.sy = 0.78;
     puff(p.x + p.w / 2, p.y + p.h, 8, '#e8dcc0', 70, 25, 0.35);
@@ -589,10 +698,10 @@ function updateEnemies(dt) {
   for (const e of AR.enemies) {
     e.animT += dt;
     if (!e.alive) { e.deadT += dt; continue; }
-    if (e.type === 'bat') {
+    if (e.type === 'bat' || e.type === 'bee') {
       const nx = e.cx + Math.sin(e.animT * e.speed) * e.range;
       e.vx = (nx - e.x) / dt; e.x = nx;
-      e.y = e.baseY + Math.sin(e.animT * 3.2) * 14;
+      e.y = e.type === 'bee' ? e.baseY + Math.sin(e.animT * 2.2) * 26 : e.baseY + Math.sin(e.animT * 3.2) * 14;
     } else {
       e.vy = Math.min(e.vy + GRAV * dt, MAXFALL);
       moveX(e, e.vx * dt);
@@ -762,6 +871,8 @@ function update(dt) {
   shake = Math.max(0, shake - dt * 30); // el temblor decae en cualquier estado
   if (state === 'play') {
     timeT += dt;
+    updateAmbient(dt, curSeason());
+    updateMovers(dt);
     updatePlayer(dt);
     if (state === 'play') updateEnemies(dt);
     updateArena(dt);
@@ -809,27 +920,75 @@ function update(dt) {
 // ---------------- Render ----------------
 // El fondo se ancla al suelo: la BASE de su pradera (fila BG_HORIZON de la imagen)
 // coincide con el césped jugable; así sus colinas se leen como paisaje lejano.
-const BG_HORIZON = 214;
 const BG_SINK = 3; // px: la base queda apenas por debajo, tapada por las matas del césped
-function drawBackground(cx, groundY) {
+function drawBackground(cx, groundY, season = 'spring') {
+  const cfg = seasonCfg(season), bg = cfg.bg();
   const sky = ctx.createLinearGradient(0, 0, 0, VH);
-  sky.addColorStop(0, '#5fd3f5'); sky.addColorStop(1, '#a8ecf7');
+  sky.addColorStop(0, cfg.sky[0]); sky.addColorStop(1, cfg.sky[1]);
   ctx.fillStyle = sky; ctx.fillRect(0, 0, VW, VH);
-  if (ok(A.bg)) {
-    const s = VH / A.bg.naturalHeight;
-    const w = A.bg.naturalWidth * s, h = VH;
-    const y0 = Math.round(groundY + BG_SINK - BG_HORIZON * s);
+  if (ok(bg)) {
+    const s = VH / bg.naturalHeight;
+    const w = bg.naturalWidth * s, h = VH;
+    const y0 = Math.round(groundY + BG_SINK - cfg.horizon * s);
     // copias alternadas en espejo: los bordes siempre casan y no se ve la costura
     const px = cx * 0.25, i0 = Math.floor(px / w);
     for (let i = i0, x = i0 * w - px; x < VW; i++, x += w) {
-      const xr = Math.round(x), wr = Math.ceil(w) + 1;
-      if (i % 2 === 0) ctx.drawImage(A.bg, xr, y0, wr, h);
-      else { ctx.save(); ctx.translate(xr + wr, y0); ctx.scale(-1, 1); ctx.drawImage(A.bg, 0, 0, wr, h); ctx.restore(); }
+      const xr = Math.round(x), wr = Math.ceil(w) + 1, mirror = i % 2 !== 0;
+      if (!mirror) ctx.drawImage(bg, xr, y0, wr, h);
+      else { ctx.save(); ctx.translate(xr + wr, y0); ctx.scale(-1, 1); ctx.drawImage(bg, 0, 0, wr, h); ctx.restore(); }
+      if (cfg.waterfall) drawWaterfall(cfg.waterfall, xr, y0, s, wr, mirror);
     }
   }
   ctx.fillStyle = 'rgba(214,240,255,0.1)'; // bruma atmosférica leve (separa fondo y primer plano sin apagar los colores)
   ctx.fillRect(0, 0, VW, VH);
 }
+// Cascada animada sobre la imagen de fondo: hilos de agua cayendo y espuma en la base
+function drawWaterfall(wf, xr, y0, s, wr, mirror) {
+  const X = ix => (mirror ? xr + wr - ix * s : xr + ix * s);
+  const xa = Math.min(X(wf.x0), X(wf.x1)), xb = Math.max(X(wf.x0), X(wf.x1));
+  if (xb < -20 || xa > VW + 20) return;
+  const top = y0 + wf.y0 * s, bot = y0 + wf.y1 * s, hgt = bot - top, wid = xb - xa;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(xa, top, wid, hgt); ctx.clip();
+  for (let k = 0; k < 14; k++) {
+    const x = xa + ((k * 37) % 100) / 100 * wid;
+    const y = top + ((menuT * 110 + k * 53) % (hgt + 30)) - 20;
+    ctx.fillStyle = k % 3 ? 'rgba(255,255,255,0.55)' : 'rgba(190,240,255,0.7)';
+    ctx.fillRect(Math.round(x), Math.round(y), 2, 12 + (k % 4) * 4);
+  }
+  ctx.restore();
+  // espuma y bruma donde cae el agua
+  for (let k = 0; k < 9; k++) {
+    const a = menuT * 3 + k * 1.7;
+    const r = 4 + (Math.sin(a) + 1) * 3;
+    ctx.fillStyle = `rgba(255,255,255,${0.35 + Math.sin(a * 1.3) * 0.15})`;
+    ctx.beginPath(); ctx.arc(xa + (k / 8) * wid, bot - 2 + Math.sin(a) * 2, r, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+// Partículas de ambiente según la estación (pétalos en primavera, destellos de sol en verano)
+let ambient = [];
+function updateAmbient(dt, season) {
+  const kind = seasonCfg(season).ambient;
+  if (AR && AR.isRoom) { ambient = []; return; }
+  if (ambient.length < 18 && Math.random() < dt * 6)
+    ambient.push(kind === 'petals'
+      ? { k: kind, x: Math.random() * VW, y: -6, vx: 10 + Math.random() * 20, vy: 18 + Math.random() * 16, life: 12, ph: Math.random() * 6 }
+      : { k: kind, x: Math.random() * VW, y: 40 + Math.random() * 220, vx: 0, vy: -4, life: 1.6, ph: Math.random() * 6 });
+  for (const a of ambient) { a.x += a.vx * dt + Math.sin(a.ph + a.y * 0.05) * 0.3; a.y += a.vy * dt; a.life -= dt; a.ph += dt; }
+  ambient = ambient.filter(a => a.life > 0 && a.y < VH + 10);
+}
+function drawAmbient() {
+  for (const a of ambient) {
+    if (a.k === 'petals') { ctx.fillStyle = 'rgba(255,183,213,0.9)'; ctx.fillRect(Math.round(a.x), Math.round(a.y), 3, 2); }
+    else {
+      const al = Math.sin(clamp(a.life / 1.6, 0, 1) * Math.PI);
+      ctx.fillStyle = `rgba(255,248,200,${al * 0.9})`;
+      ctx.fillRect(Math.round(a.x) - 2, Math.round(a.y), 5, 1); ctx.fillRect(Math.round(a.x), Math.round(a.y) - 2, 1, 5);
+    }
+  }
+}
+
 // Fondo de las salas secretas (cueva o interior del árbol)
 function drawRoomBackground(cx) {
   ctx.fillStyle = '#120c22'; ctx.fillRect(0, 0, VW, VH);
@@ -845,6 +1004,7 @@ function drawRoomBackground(cx) {
 
 // Abismo bajo el nivel del suelo: la hierba del fondo se ve completa en los precipicios
 function drawAbyss(cy) {
+  if (seasonCfg(curSeason()).water) return drawWater(cy);
   const fadeStart = G * TS - cy + BG_SINK, fadeEnd = fadeStart + 16;
   const g = ctx.createLinearGradient(0, fadeStart, 0, fadeEnd);
   g.addColorStop(0, 'rgba(12,8,28,0.35)');
@@ -856,10 +1016,25 @@ function drawAbyss(cy) {
   ctx.fillRect(0, fadeEnd, VW, VH - fadeEnd);
 }
 
+// Agua en los precipicios (verano): superficie con olas animadas y fondo profundo
+function drawWater(cy) {
+  const top = G * TS - cy + 18;
+  const g = ctx.createLinearGradient(0, top, 0, VH);
+  g.addColorStop(0, '#3fd0e0'); g.addColorStop(0.35, '#1c8fb0'); g.addColorStop(1, '#0b4a6b');
+  ctx.fillStyle = g; ctx.fillRect(0, top, VW, VH - top);
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  for (let x = 0; x < VW; x += 4) {
+    const y = top + Math.sin(x / 18 + menuT * 3) * 2;
+    ctx.fillRect(x, Math.round(y), 4, 2);
+  }
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  for (let k = 0; k < 10; k++) ctx.fillRect(((k * 71 + menuT * 20) % VW), top + 10 + (k * 13) % 40, 10, 1);
+}
+
 function drawTiles(cx, cy) {
   const c0 = Math.floor(cx / TS), c1 = Math.ceil((cx + VW) / TS);
   const r0 = Math.floor(cy / TS), r1 = Math.ceil((cy + VH) / TS);
-  const T = A.tiles;
+  const T = seasonCfg(curSeason()).tiles();
   const useWang = T && ok(T.wang_0);
   if (useWang) {
     // Rejilla dual: cada tile Wang se dibuja en un vértice y sus 4 esquinas
@@ -1047,11 +1222,36 @@ function drawEnemy(e, cx, cy) {
   } else if (e.type === 'bat') {
     const flap = e.alive ? 1 + Math.sin(e.animT * 18) * 0.12 : 1;
     if (drawFrame(A.bat, fx, fy, e.vx > 0, 1, sy * flap, alpha)) return;
+  } else if (e.type === 'bee') {
+    const buzz = e.alive ? Math.sin(e.animT * 40) * 1 : 0; // zumbido
+    if (drawFrame(A.bee, fx, fy + buzz, e.vx > 0, 1, sy, alpha)) return;
+  } else if (e.type === 'crab') {
+    const bob = e.alive ? Math.abs(Math.sin(e.animT * 16)) * 2 : 0; // patitas rápidas
+    if (drawFrame(A.crab, fx, fy - bob, false, 1, sy, alpha)) return;
   }
   ctx.globalAlpha = alpha;
-  ctx.fillStyle = e.type === 'dog' ? '#8b5a2b' : e.type === 'bat' ? '#7b3fa0' : '#777';
+  ctx.fillStyle = { dog: '#8b5a2b', bat: '#7b3fa0', bee: '#f2c641', crab: '#d64933' }[e.type] || '#777';
   ctx.fillRect(Math.round(fx - e.w / 2), Math.round(fy - e.h * sy), e.w, e.h * sy);
   ctx.globalAlpha = 1;
+}
+
+function drawMushroom(mu, cx, cy) {
+  const x = mu.x + mu.w / 2 - cx, y = mu.y + mu.h - cy + 2;
+  const sq = mu.squash, sx = 1 + sq * 0.25, sy = 1 - sq * 0.3;
+  if (drawFrame(A.mushroom, x, y, false, sx, sy)) return;
+  ctx.fillStyle = '#f5f0e6'; ctx.fillRect(Math.round(x - 5), Math.round(y - 12 * sy), 10, 12 * sy);
+  ctx.fillStyle = '#e53950'; ctx.beginPath(); ctx.ellipse(x, y - 12 * sy, 16 * sx, 10 * sy, 0, Math.PI, 0); ctx.fill();
+}
+function drawUrchin(u, cx, cy) {
+  const x = u.x + u.w / 2 - cx, y = u.y + u.h - cy + 2, pulse = 1 + Math.sin(u.t * 4) * 0.04;
+  if (drawFrame(A.urchin, x, y, false, pulse, pulse)) return;
+  ctx.fillStyle = '#7b3fa0'; ctx.beginPath(); ctx.arc(x, y - 12, 12, 0, Math.PI * 2); ctx.fill();
+}
+function drawMover(m, cx, cy) {
+  const x = m.x + m.w / 2 - cx, y = m.y - cy + 20 + Math.sin(m.t * 3) * 1; // flota un poco
+  if (drawFrame(A.log, x, y, false)) return;
+  ctx.fillStyle = '#8a5a2b'; ctx.fillRect(Math.round(m.x - cx), Math.round(m.y - cy), m.w, m.h);
+  ctx.fillStyle = '#c98a45'; ctx.fillRect(Math.round(m.x - cx), Math.round(m.y - cy), m.w, 3);
 }
 
 // Gatito mensajero: sentado, con un "!" encima hasta que Simba llega
@@ -1061,7 +1261,9 @@ function drawKitten(cx, cy) {
   const fx = k.x - cx, fy = k.y - cy + 2;
   const sit = anim(A.kitten, 'sit') || anim(A.kitten, 'idle');
   groundShadow(fx, fy - 2, 14);
-  if (!(sit && drawFrame(frameAt(sit, k.animT, 5), fx, fy, true))) {
+  if (LV.world.messenger === 'turtle') {
+    if (!drawFrame(A.turtle, fx, fy + Math.abs(Math.sin(k.animT * 2)) * -1, false)) { ctx.fillStyle = '#4caf50'; ctx.fillRect(Math.round(fx - 16), Math.round(fy - 20), 32, 20); }
+  } else if (!(sit && drawFrame(frameAt(sit, k.animT, 5), fx, fy, true))) {
     ctx.fillStyle = '#f2a65a'; ctx.fillRect(Math.round(fx - 12), Math.round(fy - 22), 24, 22);
   }
   if (state === 'play') {
@@ -1179,7 +1381,8 @@ function drawGameScene() {
   const sy = shaking ? (Math.random() - 0.5) * shake : 0;
   const cx = Math.round(camX + sx), cy = Math.round(camY + sy);
   if (AR.isRoom) drawRoomBackground(cx);
-  else { drawBackground(cx, G * TS - cy); drawAbyss(cy); }
+  else { drawBackground(cx, G * TS - cy, curSeason()); drawAbyss(cy); }
+  for (const m of AR.moverObjs) drawMover(m, cx, cy);
   drawTiles(cx, cy);
   if (AR.isRoom) { ctx.fillStyle = AR.style === 'tree' ? 'rgba(60,30,10,0.4)' : 'rgba(20,16,60,0.45)'; ctx.fillRect(0, 0, VW, VH); } // penumbra de la sala
   drawCheckpoint(cx, cy);
@@ -1187,12 +1390,15 @@ function drawGameScene() {
   drawExitDoor(cx, cy);
   for (const f of AR.fishes) drawFish(f, cx, cy);
   for (const o of AR.oneups) drawOneup(o, cx, cy);
+  for (const mu of AR.mushroomObjs) drawMushroom(mu, cx, cy);
+  for (const u of AR.urchinObjs) drawUrchin(u, cx, cy);
   drawKitten(cx, cy);
   drawMother(cx, cy);
   if (!AR.isRoom) drawBoss(cx, cy);
   for (const e of AR.enemies) drawEnemy(e, cx, cy);
   drawPlayer(cx, cy);
   drawParticles(cx, cy);
+  drawAmbient();
   drawDoorPrompt(cx, cy);
   drawHUD();
   if (state === 'talk') drawTalk(cx, cy);

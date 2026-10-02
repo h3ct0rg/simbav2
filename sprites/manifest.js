@@ -144,6 +144,35 @@ window.SPRITES = {
    35
   ]
  },
+ "boss_crab": {
+  "anims": {
+   "idle": {
+    "fps": 10,
+    "frames": [
+     "boss_crab/idle/0.png"
+    ]
+   },
+   "slam": {
+    "fps": 30,
+    "frames": [
+     "boss_crab/slam/0.png",
+     "boss_crab/slam/1.png",
+     "boss_crab/slam/2.png",
+     "boss_crab/slam/3.png",
+     "boss_crab/slam/4.png",
+     "boss_crab/slam/5.png",
+     "boss_crab/slam/6.png",
+     "boss_crab/slam/7.png"
+    ]
+   },
+   "stuck": {
+    "fps": 10,
+    "frames": [
+     "boss_crab/stuck/0.png"
+    ]
+   }
+  }
+ },
  "bat": "bat/bat.png",
  "rat": "rat/rat.png",
  "mother_thin": [
@@ -157,6 +186,13 @@ window.SPRITES = {
  "cave_door": "cave_door/cave_door.png",
  "tree_door": "tree_door/tree_door.png",
  "life_icon": "life_icon/life_icon.png",
+ "bg_summer": "bg_summer/bg_summer.png",
+ "crab": "crab/crab.png",
+ "bee": "bee/bee.png",
+ "urchin": "urchin/urchin.png",
+ "turtle": "turtle/turtle.png",
+ "mushroom": "mushroom/mushroom.png",
+ "log": "log/log.png",
  "tiles": {
   "wang_13": "tiles/wang_13.png",
   "wang_10": "tiles/wang_10.png",
@@ -174,5 +210,23 @@ window.SPRITES = {
   "wang_14": "tiles/wang_14.png",
   "wang_9": "tiles/wang_9.png",
   "wang_7": "tiles/wang_7.png"
+ },
+ "tiles_summer": {
+  "wang_13": "tiles_summer/wang_13.png",
+  "wang_10": "tiles_summer/wang_10.png",
+  "wang_4": "tiles_summer/wang_4.png",
+  "wang_12": "tiles_summer/wang_12.png",
+  "wang_6": "tiles_summer/wang_6.png",
+  "wang_8": "tiles_summer/wang_8.png",
+  "wang_0": "tiles_summer/wang_0.png",
+  "wang_1": "tiles_summer/wang_1.png",
+  "wang_11": "tiles_summer/wang_11.png",
+  "wang_3": "tiles_summer/wang_3.png",
+  "wang_2": "tiles_summer/wang_2.png",
+  "wang_5": "tiles_summer/wang_5.png",
+  "wang_15": "tiles_summer/wang_15.png",
+  "wang_14": "tiles_summer/wang_14.png",
+  "wang_9": "tiles_summer/wang_9.png",
+  "wang_7": "tiles_summer/wang_7.png"
  }
 };

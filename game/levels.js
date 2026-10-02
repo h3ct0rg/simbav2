@@ -7,9 +7,13 @@
 //    P  inicio de Simba              C  punto de control
 //    o  pescado                      +  vida extra: SOLO dentro de salas secretas
 //                                       (se guarda: cada una se recoge una única vez)
-//    r  rata    d  perro    v  murciélago
-//    K  gatito mensajero (meta de los niveles 1-3)
-//    M  mamá (meta del nivel 4)      B  jefe     [ ]  bordes de la arena del jefe
+//    r  rata    d  perro    v  murciélago    c  cangrejo    b  abeja
+//    x  erizo de mar (pincha: NO se puede pisar, hay que saltarlo)
+//    j  hongo saltarín (lanza a Simba muy alto)
+//    h  tronco que se mueve de lado a lado (ocupa 3 casillas; recorre el hueco libre)
+//    u  tronco que sube y baja (3 casillas; sube hasta 3 filas)
+//    K  mensajero (meta de los niveles 1-3; gatito en primavera, tortuga en verano)
+//    M  mamá (meta del nivel 4)      B  jefe del mundo     [ ]  bordes de la arena del jefe
 //    1-9  entrada secreta a la sala con ese número (pulsar ↓)
 //    0  (dentro de una sala) salida de vuelta al nivel
 //
@@ -19,7 +23,7 @@
 
 const WORLDS = [
   {
-    id: 1, season: 'spring',
+    id: 1, season: 'spring', messenger: 'kitten', boss: 'bruto',
     name: { es: 'Primavera', en: 'Spring' },
     levels: [
       {
@@ -178,7 +182,165 @@ const WORLDS = [
     ],
   },
   // Próximamente (se muestran bloqueados en el mapa)
-  { id: 2, season: 'summer', name: { es: 'Verano', en: 'Summer' }, levels: [] },
+  {
+    id: 2, season: 'summer', messenger: 'turtle', boss: 'crab',
+    name: { es: 'Verano', en: 'Summer' },
+    levels: [
+      {
+        id: '2-1', diff: 1.2,
+        name: { es: "Playa dorada", en: "Golden Beach" },
+        say: { es: ["¡Hola, Simba! Soy Tortu. Tu mamá pasó rumbo al río.", "Los hongos rojos te lanzan muy alto. ¡Y no pises los erizos!"], en: ["Hi, Simba! I'm Tortu. Your mom headed to the river.", "Red mushrooms launch you high. And don't step on urchins!"] },
+        map: [
+          "",
+          "                                                                                          oooo",
+          "                oooo                                                                      ====",
+          "                ====",
+          "                                                oooo                                                        b",
+          "                                               ######            b     oooo                                                    ###",
+          "                         ooo                   ######                                              ooo                         ###",
+          "                                               ######                                                                          ###",
+          "  P  ooo    c     j              x    1  c   j ######  C  ooo c                 x     c      j                  ooo x     K    ###",
+          "#########################   ###########################################    ########################   ############################",
+          "#########################   ###########################################    ########################   ############################",
+          "#########################   ###########################################    ########################   ############################",
+        ],
+        rooms: {
+          '1': { style: 'cave', map: [
+              "####################",
+              "#           +      #",
+              "#          ===     #",
+              "#                  #",
+              "#                  #",
+              "#                  #",
+              "#                  #",
+              "#                  #",
+              "# 0 ooo j      oo  #",
+              "####################",
+              "####################",
+              "####################",
+            ] },
+        },
+      },
+      {
+        id: '2-2', diff: 1.28,
+        name: { es: "Río de la cascada", en: "Waterfall River" },
+        say: { es: ["Los troncos flotan y se mueven: espera el momento justo.", "Tu mamá siguió el río hasta la bahía..."], en: ["The logs float and move: wait for the right moment.", "Your mom followed the river to the bay..."] },
+        map: [
+          "",
+          "                                                                                ooo",
+          "                                                                                ===",
+          "",
+          "                                                         ooo                              b",
+          "                                      b                                                 ooooo             b                 ooo                    ###",
+          "                     oooooo                        ooo                                                                      ===                    ###",
+          "                                                                                                                                                   ###",
+          "  P  ooo    c                     x         1                  C      c       c    j     h         ooo          x     c           x         K      ###",
+          "###################   h      ####################  h     u   #########################        ########################################################",
+          "###################          ####################            #########################        ########################################################",
+          "###################          ####################            #########################        ########################################################",
+        ],
+        rooms: {
+          '1': { style: 'cave', map: [
+              "####################",
+              "#                  #",
+              "#                  #",
+              "#          +       #",
+              "#         ===      #",
+              "#    ooo           #",
+              "#    ===           #",
+              "#                  #",
+              "# 0           oooo #",
+              "####################",
+              "####################",
+              "####################",
+            ] },
+        },
+      },
+      {
+        id: '2-3', diff: 1.36,
+        name: { es: "Acantilados soleados", en: "Sunny Cliffs" },
+        say: { es: ["¡Ya casi llegas! Pero en la bahía vive Don Pinzas.", "Cuando sus pinzas se atasquen en la arena, ¡salta sobre él!"], en: ["You're almost there! But Don Pinzas lives in the bay.", "When his claws get stuck in the sand, jump on him!"] },
+        map: [
+          "",
+          "                                                                                                                            oooo",
+          "                                                              ooo  ooo  ooo                                                 ====",
+          "                                ooo                           ===  ===  ===",
+          "                                                    b",
+          "          b        oo x    c                                                                           ooooo                                b                          ###",
+          "                 ##############      ooo                             b                                    b                                                            ###",
+          "                 ##############                                                                                                                                        ###",
+          "  P ooo       j  ##############            C   1        c  j                    x   x     c     2                 ooo   c     j      x            c               K    ###",
+          "############################### u    h   ####################               #########################   h      ###########################################################",
+          "###############################          ####################               #########################          ###########################################################",
+          "###############################          ####################               #########################          ###########################################################",
+        ],
+        rooms: {
+          '1': { style: 'tree', map: [
+              "####################",
+              "#         +        #",
+              "#        ===       #",
+              "#                  #",
+              "#                  #",
+              "#                  #",
+              "#                  #",
+              "#                  #",
+              "# 0   j  ooo  ooo  #",
+              "####################",
+              "####################",
+              "####################",
+            ] },
+          '2': { style: 'cave', map: [
+              "####################",
+              "#                  #",
+              "#                  #",
+              "#            +     #",
+              "#           ###    #",
+              "#     ooo   ###    #",
+              "#     ###   ###    #",
+              "#     ###   ###    #",
+              "# 0   ###   ### ooo#",
+              "####################",
+              "####################",
+              "####################",
+            ] },
+        },
+      },
+      {
+        id: '2-4', diff: 1.42,
+        name: { es: "La bahía de Don Pinzas", en: "Don Pinzas' Bay" },
+        map: [
+          "",
+          "",
+          "",
+          "                    ooo",
+          "                    ===",
+          "                                        b                                                                                ###",
+          "                            oooo                                                                                         ###",
+          "                                                                                                                         ###",
+          "  P  ooo    c    x     j                      1      C    [             B    ]                M                          ###",
+          "###########################  h     #########################################################################################",
+          "###########################        #########################################################################################",
+          "###########################        #########################################################################################",
+        ],
+        rooms: {
+          '1': { style: 'tree', map: [
+              "####################",
+              "#                  #",
+              "#                  #",
+              "#          +       #",
+              "#         ==       #",
+              "#     oo           #",
+              "#     ==           #",
+              "#                  #",
+              "# 0           oooo #",
+              "####################",
+              "####################",
+              "####################",
+            ] },
+        },
+      },
+    ],
+  },
   { id: 3, season: 'autumn', name: { es: 'Otoño', en: 'Autumn' }, levels: [] },
   { id: 4, season: 'winter', name: { es: 'Invierno', en: 'Winter' }, levels: [] },
 ];
@@ -195,7 +357,7 @@ function parseArea(rows, isRoom) {
   const cols = Math.max(...rows.map(r => r.length));
   const grid = Array.from({ length: LV_ROWS }, () => new Array(cols).fill(0));
   const a = {
-    isRoom, cols, rows: LV_ROWS, grid, spawn: null, fish: [], lifes: [], walkers: [], bats: [],
+    isRoom, cols, rows: LV_ROWS, grid, spawn: null, fish: [], lifes: [], walkers: [], bats: [], urchins: [], mushrooms: [], movers: [],
     doors: [], checkpoint: null, messenger: null, mother: null, boss: null, arena: null, exit: null,
   };
   let arenaL = null;
@@ -208,8 +370,11 @@ function parseArea(rows, isRoom) {
       else if (ch === 'P') a.spawn = { c, r };
       else if (ch === 'o') a.fish.push({ c, r });
       else if (ch === '+') a.lifes.push({ c, r });
-      else if (ch === 'r' || ch === 'd') a.walkers.push({ type: ch === 'r' ? 'rat' : 'dog', c, r });
-      else if (ch === 'v') a.bats.push({ c, r });
+      else if (ch === 'r' || ch === 'd' || ch === 'c') a.walkers.push({ type: { r: 'rat', d: 'dog', c: 'crab' }[ch], c, r });
+      else if (ch === 'v' || ch === 'b') a.bats.push({ type: ch === 'v' ? 'bat' : 'bee', c, r });
+      else if (ch === 'x') a.urchins.push({ c, r });
+      else if (ch === 'j') a.mushrooms.push({ c, r });
+      else if (ch === 'h' || ch === 'u') a.movers.push({ axis: ch === 'h' ? 'x' : 'y', c, r });
       else if (ch === 'C') a.checkpoint = { c, r };
       else if (ch === 'K') a.messenger = { c, r };
       else if (ch === 'M') a.mother = { c, r };

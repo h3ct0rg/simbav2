@@ -110,9 +110,68 @@
     },
     "life_icon": {
       "url": "https://api.pixellab.ai/mcp/images/7f5bf126-8ccc-457a-b967-677c4c60ee1f/download"
+    },
+    "bg_summer": {
+      "url": "https://api.pixellab.ai/mcp/images/cc66e83c-459b-4a93-9036-b7a72795a4aa/download",
+      "crop": false
+    },
+    "crab": {
+      "url": "https://api.pixellab.ai/mcp/images/f533b6d5-d62d-402c-a4f6-65623bfb0850/download"
+    },
+    "bee": {
+      "url": "https://api.pixellab.ai/mcp/images/4bc0c612-5784-4382-b538-c8ab4c5e270d/download"
+    },
+    "urchin": {
+      "url": "https://api.pixellab.ai/mcp/images/b84cf79c-3f3f-4e0d-850d-9da64066fddb/download"
+    },
+    "turtle": {
+      "url": "https://api.pixellab.ai/mcp/images/65aec335-bd5d-466c-8e61-fb30212856c7/download"
+    },
+    "mushroom": {
+      "url": "https://api.pixellab.ai/mcp/images/3c02962b-4e9a-4385-8116-585d186df880/download"
+    },
+    "log": {
+      "url": "https://api.pixellab.ai/mcp/images/95517e6d-a0a1-48dd-b79e-6ef3743257e8/download"
     }
   },
-  "tiles": {
-    "source": "raw/tileset.png + raw/tileset_meta.json (tileset f569141d-9d98-4f70-a251-c9bbb740470c)"
+  "tilesets": {
+    "tiles": {
+      "image": "raw/tileset.png",
+      "meta": "raw/tileset_meta.json"
+    },
+    "tiles_summer": {
+      "image": "raw/tileset_summer.png",
+      "meta": "raw/tileset_summer_meta.json"
+    }
+  },
+  "frame_sets": {
+    "boss_crab": {
+      "source": "animate_image 6eab74b0-7413-418e-b7c0-0e9ed5ac95d4 sobre la imagen 802721c2 (pinzas en alto)",
+      "anims": {
+        "idle": {
+          "files": [
+            "raw/crab_slam/0.png"
+          ]
+        },
+        "slam": {
+          "files": [
+            "raw/crab_slam/1.png",
+            "raw/crab_slam/2.png",
+            "raw/crab_slam/3.png",
+            "raw/crab_slam/4.png",
+            "raw/crab_slam/5.png",
+            "raw/crab_slam/6.png",
+            "raw/crab_slam/7.png",
+            "raw/crab_slam/8.png"
+          ],
+          "fps": 30
+        },
+        "stuck": {
+          "files": [
+            "raw/crab_slam/8.png"
+          ]
+        }
+      }
+    }
   }
 }

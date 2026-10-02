@@ -24,12 +24,13 @@ Todos los sprites se generaron con [PixelLab](https://pixellab.ai).
 
 ### Crear o editar niveles
 
-Los niveles están en `game/levels.js` como dibujos de texto de 12 filas (`#` tierra, `=` tablón, `o` pescado, `+` vida, `r d v` enemigos, `1-9` puertas secretas...). La leyenda completa está al principio del archivo.
+Los niveles están en `game/levels.js` como dibujos de texto de 12 filas (`#` tierra, `=` tablón, `o` pescado, `+` vida, `r d v c b x` enemigos, `j` hongo, `h u` troncos móviles, `1-9` puertas secretas...). La leyenda completa está al principio del archivo.
 
 ## Características
 
-- **Mapa de mundos** con 4 estaciones (Primavera, Verano, Otoño, Invierno). El Mundo 1 se puede jugar entero; los otros aparecen como "próximamente".
+- **Mapa de mundos** con 4 estaciones (Primavera, Verano, Otoño, Invierno). Los mundos 1 y 2 se pueden jugar enteros; Otoño e Invierno aparecen como "próximamente".
 - **Mundo 1, Primavera:** 4 niveles con dificultad creciente. En los niveles 1 a 3 un gatito mensajero anima a Simba; en el nivel 4 está **Bruto, el gran bulldog**, y después **mamá**.
+- **Mundo 2, Verano:** fondo con una cascada animada, agua en los precipicios y música propia. Mecánicas nuevas: **hongos saltarines** y **troncos que se mueven** sobre el río. Enemigos nuevos: cangrejos, abejas y **erizos de mar** (pinchan: hay que saltarlos). El mensajero es **Tortu**, una tortuga, y el jefe es **Don Pinzas**: golpea la arena y lanza ondas que hay que saltar, y cuando se le atascan las pinzas se le salta encima.
 - **Vidas y salud separadas:** se empieza con 3 vidas, y los corazones son la salud de cada intento. Perder los 3 corazones o caer a un precipicio cuesta 1 vida. Con 0 vidas, game over, y al volver al mapa recuperas 3.
 - **Pasajes secretos** en cuevas y troncos huecos (se entra pulsando abajo), con pescados y **vidas extra escondidas**. Cada vida extra solo se puede recoger una vez.
 - **Jefe con ciclo de aviso, embestida, choque y mareo:** se le salta encima cuando está mareado. Son 3 golpes, cada fase más rápida, y al final huye.
@@ -49,7 +50,7 @@ game/            el juego
   levels.js      mundos y niveles como mapas de texto (con la leyenda)
   menu.js        menú principal, configuración y pausa
   screens.js     mapa de mundos, transiciones, fin de nivel
-  boss.js        jefe Bruto
+  boss.js        jefes: Bruto (mundo 1) y Don Pinzas (mundo 2)
   game.js        motor, física, enemigos, salas secretas y render
 sprites/         librería de sprites (ver sprites/README.md)
   manifest.js    lista de sprites que carga el juego (generada)

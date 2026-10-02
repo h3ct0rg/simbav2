@@ -5,7 +5,7 @@ para la izquierda se espejan en código.
 
 | Carpeta | Contenido | Tamaño recortado | PixelLab ID |
 |---|---|---|---|
-| `hero/` | Simba, gato blanco ojos azules: `idle` (8f), `run` (6f), `jump` (8f) | 80×65 | personaje `9cf92fa4-8c5e-47a5-95e2-ff432540f02d` |
+| `hero/` | Simba, gato blanco ojos azules: `idle` (8f), `run` (8f, modo v3), `jump` (8f) | 80×65 | personaje `9cf92fa4-8c5e-47a5-95e2-ff432540f02d` |
 | `mother/` | Mamá gata gris peluda: `idle` (8f) | 66×46 | personaje `71c92b45-c37a-4963-bb07-3260db4f075e` |
 | `mother_thin/` | Mamá flaquita (estática), con colores ajustados a la paleta de `mother/` mediante `palette_from` | 58×47 | imagen `27e44334-…` |
 | `bruto/` | **Bruto**, jefe bulldog del Mundo 1: `charge` (6f), `bark` (6f), `idle` (pose fija) | 148×98 | personaje `b040deee-3a25-4524-9e26-462f8c4b1a87` |
@@ -13,6 +13,12 @@ para la izquierda se espejan en código.
 | `cave_bg/` | Fondo de las salas secretas (cueva con hongos) | 400×224 | imagen |
 | `cave_door/`, `tree_door/` | Entradas secretas: arco de cueva y árbol con hueco | 94×92, 83×118 | imágenes |
 | `life_icon/` | Icono de vida (cara de Simba) | 30×30 | imagen |
+| `bg_summer/` | Fondo de verano con cascada (la cascada se anima por código) | 400×224 | imagen |
+| `tiles_summer/` | 16 tiles Wang de arena con césped (mundo 2) | 32×32 | tileset |
+| `crab/`, `bee/`, `urchin/` | Enemigos del verano: cangrejo, abeja y erizo de mar | ~41×35 | imágenes |
+| `turtle/` | Tortu, mensajero del mundo 2 | 46×48 | imagen |
+| `mushroom/`, `log/` | Hongo saltarín y tronco-balsa móvil | 48×54, 80×19 | imágenes |
+| `boss_crab/` | **Don Pinzas**: `idle`, `slam` (8f, con `animate_image`), `stuck` | 104×83 | animación de imagen |
 | `dog/` | Bulldog enemigo: `walk` (6f) | 70×44 | personaje `ec152885-a328-4486-a0f4-fd3758893b74` |
 | `bat/` | Murciélago enemigo (estático) | 56×38 | imagen `495be581-…` |
 | `rat/` | Rata enemiga (estática, mira a la derecha) | 54×29 | imagen `9166e9b0-…` |
@@ -34,6 +40,11 @@ PIXELLAB_KEY=tu-api-key python gen_world1.py   # ejemplo: genera el arte del Mun
 ```
 
 `pixellab_api.py` lee la key de la variable de entorno; nunca se guarda en el repositorio.
+
+## Otras herramientas
+- `crab_pose.py`: intento de crear por código la pose de pinzas abajo (descartado: se usó `animate_image`).
+- `gen_world2.py`: genera el arte del Mundo 2 (`PIXELLAB_KEY=... python gen_world2.py`).
+- `frame_sets` en `sources.json`: animaciones hechas con `animate_image` a partir de frames ya descargados en `raw/`.
 
 ## Añadir más sprites
 1. Genera en PixelLab (p. ej. otra animación del héroe con `animate_character`).

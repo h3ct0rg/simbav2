@@ -1,0 +1,46 @@
+>> bg_summer
+id: cc66e83c-459b-4a93-9036-b7a72795a4aa | job_id: cc66e83c-459b-4a93-9036-b7a72795a4aa | description: bright sunny summer landscape background for a 2D platformer game, a tall white waterfall falling from green rocky cliffs into a turquoise ri
+>> bg_summer_wait
+1 job(s) finished after 24s, 0 still running: | cc66e83c-459b-4a93-9036-b7a72795a4aa completed (image_pixflux, took 25s) | hint: nothing else is running
+>> tiles_summer
+id: ecf97929-0eb9-4374-9041-a9894581f251 | terrain: Sidescroller: golden beach sand with small shells and pebbles with bright sunny green grass | type: sidescroller (side-view, transparent bg, no slopes) | status: processing (~100s) | base_tile_id:
+>> tiles_summer_wait
+1 job(s) finished after 96s, 0 still running: | 0bb44f50-306a-4f4a-bd9b-a7eae8847ae8 completed (generation, took 97s) | hint: nothing else is running
+>> crab
+id: f533b6d5-d62d-402c-a4f6-65623bfb0850 | job_id: f533b6d5-d62d-402c-a4f6-65623bfb0850 | description: small red beach crab enemy walking sideways, side view, two raised claws, angry eyes on stalks | size: 64x64px | transparent: True | asset_id: d736
+>> crab_wait
+1 job(s) finished after 22s, 0 still running: | f533b6d5-d62d-402c-a4f6-65623bfb0850 completed (image_pixflux, took 24s) | hint: nothing else is running
+>> bee
+id: 4bc0c612-5784-4382-b538-c8ab4c5e270d | job_id: 4bc0c612-5784-4382-b538-c8ab4c5e270d | description: chubby angry bumblebee enemy flying, side view facing left, yellow and black stripes, small translucent wings, stinger | size: 64x64px | transpar
+>> bee_wait
+1 job(s) finished after 18s, 0 still running: | 4bc0c612-5784-4382-b538-c8ab4c5e270d completed (image_pixflux, took 19s) | hint: nothing else is running
+>> urchin
+id: b84cf79c-3f3f-4e0d-850d-9da64066fddb | job_id: b84cf79c-3f3f-4e0d-850d-9da64066fddb | description: round spiky purple sea urchin hazard with long sharp spikes, sitting on the ground, cute eyes | size: 48x48px | transparent: True | asset_id: 72477
+>> urchin_wait
+1 job(s) finished after 12s, 0 still running: | b84cf79c-3f3f-4e0d-850d-9da64066fddb completed (image_pixflux, took 13s) | hint: nothing else is running
+>> turtle
+id: 65aec335-bd5d-466c-8e61-fb30212856c7 | job_id: 65aec335-bd5d-466c-8e61-fb30212856c7 | description: friendly green sea turtle wearing a small straw hat, side view facing left, smiling, standing on the sand | size: 64x64px | transparent: True | ass
+>> turtle_wait
+1 job(s) finished after 30s, 0 still running: | 65aec335-bd5d-466c-8e61-fb30212856c7 completed (image_pixflux, took 31s) | hint: nothing else is running
+>> mushroom
+id: 3c02962b-4e9a-4385-8116-585d186df880 | job_id: 3c02962b-4e9a-4385-8116-585d186df880 | description: big bouncy red mushroom springboard with white spots and a short thick white stem, side view game prop | size: 64x64px | transparent: True | asset_
+>> mushroom_wait
+1 job(s) finished after 23s, 0 still running: | 3c02962b-4e9a-4385-8116-585d186df880 completed (image_pixflux, took 24s) | hint: nothing else is running
+>> log
+id: 95517e6d-a0a1-48dd-b79e-6ef3743257e8 | job_id: 95517e6d-a0a1-48dd-b79e-6ef3743257e8 | description: floating wooden log raft platform made of three tied logs, side view, horizontal, game platform | size: 96x32px | transparent: True | asset_id: 397
+>> log_wait
+1 job(s) finished after 18s, 0 still running: | 95517e6d-a0a1-48dd-b79e-6ef3743257e8 completed (image_pixflux, took 19s) | hint: nothing else is running
+>> boss_crab_up
+id: 802721c2-a03f-4d55-a709-0405f3fa9e14 | job_id: 802721c2-a03f-4d55-a709-0405f3fa9e14 | description: giant boss crab, huge red armored shell, two enormous claws raised high above its head, angry eyes, side view facing left, menacing | size: 128
+>> boss_crab_up_wait
+1 job(s) finished after 54s, 0 still running: | 802721c2-a03f-4d55-a709-0405f3fa9e14 completed (image_pixflux, took 55s) | hint: nothing else is running
+>> boss_crab_down
+id: 78f183d3-beba-40c1-8a62-ba52c691fec2 | job_id: 78f183d3-beba-40c1-8a62-ba52c691fec2 | description: the same giant red boss crab with both enormous claws slammed down and stuck in the sand, dizzy eyes, side view facing left | size: 128x96px | tr
+>> boss_crab_down_wait
+1 job(s) finished after 33s, 0 still running: | 78f183d3-beba-40c1-8a62-ba52c691fec2 completed (image_pixflux, took 34s) | hint: nothing else is running
+== LISTO ==
+credits: $0.00
+generations_remaining: 17
+generations_used: 23
+generations_total: 40
+subscription: trial
